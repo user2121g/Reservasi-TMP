@@ -1,0 +1,1688 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>The Music Place - Fairmont Jakarta • Seating & Reservation System (76 Seats)</title>
+<style>
+  :root {
+    --bg-main: #0b0c10;
+    --bg-card: #14161f;
+    --bg-panel: #1b1e2b;
+    --bg-panel-hover: #242838;
+    --border: #2c3042;
+    --border-light: rgba(255,255,255,0.08);
+    --gold: #d4af37;
+    --gold-light: #fbeeb8;
+    --gold-dark: #9e7d1e;
+    --gold-glow: rgba(212, 175, 55, 0.4);
+    --text-white: #f9fafb;
+    --text-muted: #9ca3af;
+    --text-dim: #6b7280;
+
+    /* Status Colors (Tone Cream + Brown + Gold Elegant Theme) */
+    --c-avail: #2e7d32;
+    --c-avail-border: #1b5e20;
+    --c-selected: #eab308;
+    --c-selected-border: #ca8a04;
+    --c-reserved: #c62828;
+    --c-reserved-border: #8e1c1c;
+    --c-blocked: #4b5563;
+    --c-blocked-border: #374151;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-white);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  header {
+    background: linear-gradient(180deg, #1c1e29 0%, #111219 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-badge {
+    width: 42px;
+    height: 42px;
+    background: radial-gradient(circle, #2d2616 0%, #151410 100%);
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Georgia', serif;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--gold);
+    box-shadow: 0 0 12px var(--gold-glow);
+    flex-shrink: 0;
+  }
+
+  .brand-info h1 {
+    font-family: 'Georgia', serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: var(--gold-light);
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .brand-info p {
+    font-size: 10.5px;
+    letter-spacing: 1.2px;
+    color: var(--text-muted);
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+    color: #111;
+    border-color: var(--gold);
+    box-shadow: 0 2px 8px var(--gold-glow);
+  }
+  .btn-gold:hover {
+    filter: brightness(1.15);
+    transform: translateY(-1px);
+  }
+
+  .btn-outline {
+    background: var(--bg-panel);
+    color: var(--text-white);
+    border-color: var(--border);
+  }
+  .btn-outline:hover {
+    background: var(--bg-panel-hover);
+    border-color: var(--gold);
+  }
+
+  .btn-danger {
+    background: rgba(220, 38, 38, 0.15);
+    color: #f87171;
+    border-color: #ef4444;
+  }
+  .btn-danger:hover {
+    background: #dc2626;
+    color: white;
+  }
+
+  /* Responsive Mobile Navigation Tabs */
+  .mobile-tab-nav {
+    display: none;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 12px;
+    gap: 8px;
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 8px 10px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .tab-btn.active {
+    background: var(--gold);
+    color: #111;
+    border-color: var(--gold);
+  }
+
+  /* Main Workspace Layout */
+  .main-layout {
+    display: grid;
+    grid-template-columns: 290px 1fr 340px;
+    gap: 14px;
+    padding: 14px;
+    flex: 1;
+    height: calc(100vh - 66px);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Sidebars */
+  .sidebar {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .sidebar::-webkit-scrollbar { width: 5px; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .card-sec {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .sec-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--gold);
+    margin-bottom: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-card {
+    background: rgba(0,0,0,0.35);
+    border-radius: 6px;
+    padding: 8px 10px;
+    border-left: 3.5px solid var(--gold);
+    transition: transform 0.15s ease;
+    cursor: pointer;
+  }
+  .stat-card:hover { transform: translateY(-2px); }
+  .stat-card.green { border-left-color: var(--c-avail); }
+  .stat-card.amber { border-left-color: var(--c-selected); }
+  .stat-card.red { border-left-color: var(--c-reserved); }
+  .stat-card.gray { border-left-color: var(--c-blocked); }
+
+  .stat-val {
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+  }
+  .stat-label {
+    font-size: 9.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .prog-bg {
+    height: 6px;
+    background: #111;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 10px;
+  }
+  .prog-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), #f59e0b);
+    width: 0%;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Legend Grid */
+  .legend-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    font-size: 11px;
+  }
+  .legend-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .legend-row:hover { background: rgba(255,255,255,0.06); }
+  .leg-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  /* Filter Pills */
+  .btn-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  .pill {
+    padding: 5px 9px;
+    background: #13151d;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 10.5px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pill:hover { border-color: var(--gold); color: var(--gold-light); }
+  .pill.active {
+    background: var(--gold);
+    color: #111;
+    font-weight: 700;
+    border-color: var(--gold);
+  }
+
+  /* Center Floor Plan Canvas */
+  .viewport-center {
+    background: #12141a;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .view-tools {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(20, 22, 31, 0.94);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px;
+    display: flex;
+    gap: 4px;
+    z-index: 30;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  }
+
+  .tool-btn {
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    color: var(--text-white);
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .tool-btn:hover { background: rgba(255,255,255,0.12); color: var(--gold); }
+
+  .canvas-scroll {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    cursor: grab;
+    touch-action: pan-x pan-y;
+  }
+  .canvas-scroll:active { cursor: grabbing; }
+
+  #floorplan-wrapper {
+    transition: transform 0.12s ease-out;
+    transform-origin: center center;
+  }
+
+  svg.floorplan-svg {
+    background: #faf8f5;
+    border-radius: 6px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+    user-select: none;
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Single-Layer Interactive Seats (Cream & Warm Brown Dining Table Style) */
+  .interactive-seat {
+    cursor: pointer;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), filter 0.15s;
+  }
+  .interactive-seat:hover {
+    filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.95));
+    transform: scale(1.1);
+  }
+
+  .interactive-seat .chair-body {
+    transition: fill 0.2s, stroke 0.2s, stroke-width 0.2s;
+  }
+
+  /* Available */
+  .interactive-seat[data-status="available"] .chair-body {
+    fill: var(--c-avail);
+    stroke: var(--c-avail-border);
+    stroke-width: 1;
+  }
+  .interactive-seat[data-status="available"] text {
+    fill: #ffffff;
+    font-weight: 700;
+  }
+
+  /* Selected */
+  .interactive-seat[data-status="selected"] .chair-body {
+    fill: var(--c-selected);
+    stroke: var(--c-selected-border);
+    stroke-width: 2;
+    animation: seatGlow 1.6s infinite alternate;
+  }
+  .interactive-seat[data-status="selected"] text {
+    fill: #111111;
+    font-weight: 900;
+  }
+
+  /* Reserved */
+  .interactive-seat[data-status="reserved"] .chair-body {
+    fill: var(--c-reserved);
+    stroke: var(--c-reserved-border);
+    stroke-width: 1;
+  }
+  .interactive-seat[data-status="reserved"] text {
+    fill: #ffffff;
+    font-weight: 700;
+  }
+
+  /* Blocked */
+  .interactive-seat[data-status="blocked"] .chair-body {
+    fill: var(--c-blocked);
+    stroke: var(--c-blocked-border);
+    stroke-width: 1;
+  }
+  .interactive-seat[data-status="blocked"] text {
+    fill: #d1d5db;
+  }
+
+  .interactive-seat.dimmed {
+    opacity: 0.18;
+    pointer-events: none;
+  }
+
+  @keyframes seatGlow {
+    from { filter: drop-shadow(0 0 2px rgba(234, 179, 8, 0.5)); }
+    to { filter: drop-shadow(0 0 8px rgba(234, 179, 8, 0.95)); }
+  }
+
+  /* Bottom Floating Action Bar */
+  .floating-action-bar {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(25, 27, 36, 0.96);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--gold);
+    border-radius: 30px;
+    padding: 8px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 40;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .floating-action-bar.show { transform: translateX(-50%) translateY(0); }
+
+  .floating-info {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gold-light);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Form Elements */
+  .form-group {
+    margin-bottom: 10px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .form-control {
+    width: 100%;
+    background: #111319;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 7px 10px;
+    color: white;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-control:focus { border-color: var(--gold); }
+
+  .badge-box {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 32px;
+    max-height: 80px;
+    overflow-y: auto;
+    padding: 5px;
+    background: #111319;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+  }
+  .seat-badge {
+    background: var(--gold);
+    color: #111;
+    font-weight: bold;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .seat-badge .del-btn { cursor: pointer; font-weight: bold; }
+
+  .search-input {
+    width: 100%;
+    background: #13151d;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 6px 9px;
+    color: white;
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  .table-scroll {
+    max-height: 180px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+  .res-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .res-table th {
+    text-align: left;
+    color: var(--gold-light);
+    border-bottom: 1px solid var(--border);
+    padding: 4px;
+    font-size: 10.5px;
+    position: sticky;
+    top: 0;
+    background: var(--bg-panel);
+  }
+  .res-table td {
+    padding: 6px 4px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  /* Floating Tooltip */
+  .seat-tooltip {
+    position: fixed;
+    pointer-events: none;
+    background: #1f222e;
+    border: 1px solid var(--gold);
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 11px;
+    color: white;
+    z-index: 2000;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    display: none;
+    line-height: 1.4;
+  }
+
+  /* Toast Notification */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #1f222e;
+    border: 1px solid var(--gold);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+    display: none;
+    z-index: 3000;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* Responsive Rules */
+  @media (max-width: 1100px) {
+    .main-layout {
+      grid-template-columns: 260px 1fr 290px;
+      gap: 10px;
+      padding: 10px;
+    }
+  }
+
+  @media (max-width: 900px) {
+    body { overflow-y: auto; }
+    header { padding: 8px 14px; }
+    .mobile-tab-nav {
+      display: flex;
+      position: sticky;
+      top: 57px;
+      z-index: 95;
+    }
+    .main-layout {
+      display: block;
+      height: auto;
+      padding: 10px;
+      min-height: calc(100vh - 120px);
+    }
+    .sidebar, .viewport-center {
+      display: none;
+      height: auto;
+      margin-bottom: 12px;
+    }
+    .viewport-center.active-tab-content {
+      display: flex;
+      height: 72vh;
+    }
+    .sidebar.active-tab-content {
+      display: flex;
+    }
+    .floating-action-bar {
+      bottom: 20px;
+      width: 90%;
+      justify-content: space-between;
+    }
+  }
+
+  @media print {
+    header, .mobile-tab-nav, .sidebar, .view-tools, .floating-action-bar {
+      display: none !important;
+    }
+    .main-layout {
+      display: block !important;
+      padding: 0 !important;
+      height: auto !important;
+    }
+    .viewport-center {
+      display: block !important;
+      border: none !important;
+      background: transparent !important;
+    }
+    svg.floorplan-svg {
+      box-shadow: none !important;
+      width: 100% !important;
+      height: auto !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="brand">
+    <div class="brand-badge">MP</div>
+    <div class="brand-info">
+      <h1>The Music Place</h1>
+      <p>AT FAIRMONT JAKARTA • SEATING RESERVATION (76 SEATS)</p>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-outline" onclick="exportDataJSON()">📥 Export JSON</button>
+    <label class="btn btn-outline" style="margin-bottom:0; cursor:pointer;">
+      📤 Import JSON <input type="file" id="importFileInput" style="display:none;" onchange="importDataJSON(event)">
+    </label>
+    <button class="btn btn-outline" onclick="window.print()">🖨️ Cetak / PDF</button>
+    <button class="btn btn-danger" onclick="resetAllData()">🔄 Reset</button>
+  </div>
+</header>
+
+<!-- Mobile Tab Switcher -->
+<div class="mobile-tab-nav" id="mobileTabs">
+  <button class="tab-btn active" onclick="switchMobileTab('viewport-center', this)">🗺️ Denah Lantai</button>
+  <button class="tab-btn" onclick="switchMobileTab('sidebar-right', this)">📝 Form Reservasi (<span id="mob-sel-cnt">0</span>)</button>
+  <button class="tab-btn" onclick="switchMobileTab('sidebar-left', this)">📊 Filter & Stats</button>
+</div>
+
+<!-- Main 3-Column Workspace -->
+<div class="main-layout">
+  
+  <!-- Left Column: Live Stats & Specs -->
+  <div class="sidebar sidebar-left active-tab-content" id="sidebar-left">
+    
+    <!-- Occupancy Stats -->
+    <div class="card-sec">
+      <div class="sec-title">
+        <span>Live Occupancy</span>
+        <span id="occupancy-rate" style="color:var(--gold-light);">0%</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card green" onclick="filterByStatus('available')">
+          <div class="stat-val" id="stat-avail">76</div>
+          <div class="stat-label">Available</div>
+        </div>
+        <div class="stat-card amber">
+          <div class="stat-val" id="stat-selected">0</div>
+          <div class="stat-label">Selected</div>
+        </div>
+        <div class="stat-card red" onclick="filterByStatus('reserved')">
+          <div class="stat-val" id="stat-reserved">0</div>
+          <div class="stat-label">Reserved</div>
+        </div>
+        <div class="stat-card gray" onclick="filterByStatus('blocked')">
+          <div class="stat-val" id="stat-blocked">0</div>
+          <div class="stat-label">Blocked</div>
+        </div>
+      </div>
+      <div class="prog-bg">
+        <div class="prog-fill" id="occupancy-bar"></div>
+      </div>
+    </div>
+
+    <!-- Status Legend & Visual Filters -->
+    <div class="card-sec">
+      <div class="sec-title">
+        <span>Status Filter</span>
+        <span style="font-size:9.5px; cursor:pointer; color:var(--gold);" onclick="filterByStatus('all')">Reset Filter</span>
+      </div>
+      <div class="legend-grid">
+        <div class="legend-row" onclick="filterByStatus('available')"><span class="leg-dot" style="background:var(--c-avail);"></span> Available</div>
+        <div class="legend-row" onclick="filterByStatus('selected')"><span class="leg-dot" style="background:var(--c-selected);"></span> Selected</div>
+        <div class="legend-row" onclick="filterByStatus('reserved')"><span class="leg-dot" style="background:var(--c-reserved);"></span> Reserved</div>
+        <div class="legend-row" onclick="filterByStatus('blocked')"><span class="leg-dot" style="background:var(--c-blocked);"></span> Blocked</div>
+      </div>
+    </div>
+
+    <!-- Quick Row Selection -->
+    <div class="card-sec">
+      <div class="sec-title">Pilih Cepat Baris</div>
+      <div class="btn-pills">
+        <button class="pill" onclick="selectRow('A')">A ROW (26)</button>
+        <button class="pill" onclick="selectRow('B')">B ROW (24)</button>
+        <button class="pill" onclick="selectRow('C')">C ROW (20)</button>
+        <button class="pill" onclick="selectRow('D')">D ROW / VIP (6)</button>
+        <button class="pill" onclick="selectAllSeats()">Semua Kursi (76)</button>
+        <button class="pill" onclick="clearSelection()">Kosongkan Pilihan</button>
+      </div>
+    </div>
+
+    <!-- Venue Dimensions -->
+    <div class="card-sec" style="flex:1;">
+      <div class="sec-title">Spesifikasi Venue</div>
+      <div style="font-size: 11px; line-height: 1.6; color: var(--text-muted);">
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-light); padding:2px 0;">
+          <span>Stage:</span> <strong style="color:var(--text-white)">4m × 9.2m (36.8 m²)</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-light); padding:2px 0;">
+          <span>LED Frame:</span> <strong style="color:var(--text-white)">4m × 9.0m</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-light); padding:2px 0;">
+          <span>Dance Floor:</span> <strong style="color:var(--text-white)">3m × 8.0m (24 m²)</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-light); padding:2px 0;">
+          <span>Total Meja Fisik:</span> <strong style="color:var(--text-white)">41 Meja</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:2px 0;">
+          <span>Total Kursi:</span> <strong style="color:var(--gold)">76 Seats</strong>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Center Column: Architectural Floor Plan Canvas -->
+  <div class="viewport-center active-tab-content" id="viewport-center">
+    <div class="view-tools">
+      <button class="tool-btn" title="Zoom In" onclick="zoom(1.15)">＋</button>
+      <button class="tool-btn" title="Zoom Out" onclick="zoom(0.85)">－</button>
+      <button class="tool-btn" title="Reset View" onclick="resetZoom()">⟲</button>
+    </div>
+
+    <div class="canvas-scroll" id="panZoomContainer">
+      <div id="floorplan-wrapper">
+        <svg class="floorplan-svg" width="980" height="700" viewBox="0 0 980 700" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#eee9dc" stroke-width="0.75"/>
+            </pattern>
+            <pattern id="dancefloor-pat" width="40" height="15" patternUnits="userSpaceOnUse">
+              <rect width="40" height="15" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.5"/>
+            </pattern>
+            <pattern id="stage-pat" width="10" height="10" patternUnits="userSpaceOnUse">
+              <rect width="10" height="10" fill="#f3f4f6" stroke="#e5e7eb" stroke-width="0.5"/>
+            </pattern>
+          </defs>
+
+          <!-- Outer Architectural Blueprint Background -->
+          <rect width="980" height="700" fill="#fbf9f4"/>
+          <rect width="980" height="700" fill="url(#grid)"/>
+
+          <!-- OUTER WALLS -->
+          <rect x="40" y="30" width="900" height="520" fill="none" stroke="#111" stroke-width="3"/>
+
+          <!-- Top Wall Pillars -->
+          <g fill="#f8fafc" stroke="#111" stroke-width="1.5">
+            <rect x="110" y="18" width="40" height="12"/>
+            <rect x="250" y="18" width="40" height="12"/>
+            <rect x="440" y="18" width="40" height="12"/>
+            <rect x="580" y="18" width="40" height="12"/>
+            <rect x="740" y="18" width="40" height="12"/>
+            <rect x="820" y="18" width="40" height="12"/>
+          </g>
+
+          <!-- PREPARATION & BUFFET -->
+          <rect x="44" y="34" width="60" height="28" fill="#f1f5f9" stroke="#333" stroke-width="1"/>
+          <text x="74" y="52" font-size="7.5" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#333">PREPARATION</text>
+          
+          <rect x="106" y="34" width="200" height="28" fill="#f8fafc" stroke="#333" stroke-width="1"/>
+          <text x="206" y="52" font-size="8.5" font-family="Arial" font-weight="bold" letter-spacing="1" text-anchor="middle" fill="#333">BUFFET AREA</text>
+          <line x1="172" y1="34" x2="172" y2="62" stroke="#aaa" stroke-dasharray="2,2"/>
+          <line x1="240" y1="34" x2="240" y2="62" stroke="#aaa" stroke-dasharray="2,2"/>
+          <rect x="306" y="34" width="28" height="28" fill="#fff" stroke="#333" stroke-width="1"/>
+
+          <!-- LED FRAME & STAGE -->
+          <rect x="336" y="34" width="300" height="16" fill="#1e293b" stroke="#0f172a" stroke-width="1"/>
+          <text x="486" y="46" font-size="9" font-family="Arial" font-weight="bold" letter-spacing="3" text-anchor="middle" fill="#e2e8f0">L E D   F R A M E</text>
+          
+          <path d="M 336 50 L 636 50 L 636 120 L 650 120 L 650 148 L 636 148 L 636 170 L 336 170 L 336 148 L 322 148 L 322 120 L 336 120 Z" fill="url(#stage-pat)" stroke="#222" stroke-width="1.8"/>
+          <text x="486" y="105" font-size="12" font-family="Georgia, serif" font-weight="bold" letter-spacing="3" text-anchor="middle" fill="#111">S T A G E</text>
+          <text x="486" y="122" font-size="8.5" font-family="Arial" text-anchor="middle" fill="#555">4M × 9.2M (H: 50cm)</text>
+
+          <!-- DANCE FLOOR -->
+          <rect x="350" y="176" width="270" height="85" fill="url(#dancefloor-pat)" stroke="#3b82f6" stroke-width="1.2" stroke-dasharray="3,2"/>
+          <text x="485" y="215" font-size="10" font-family="Georgia, serif" font-weight="bold" letter-spacing="2" text-anchor="middle" fill="#1e3a8a">D A N C E   F L O O R</text>
+          <text x="485" y="230" font-size="8" font-family="Arial" text-anchor="middle" fill="#64748b">3M × 8M</text>
+
+          <!-- KITCHEN & BAR -->
+          <rect x="44" y="120" width="55" height="235" fill="#f8fafc" stroke="#444" stroke-width="1.5"/>
+          <text x="71" y="235" font-size="10" font-family="Arial" font-weight="bold" letter-spacing="2" text-anchor="middle" fill="#333" transform="rotate(-90 71 235)">KITCHEN</text>
+
+          <rect x="115" y="300" width="85" height="80" fill="#fff" stroke="#999" stroke-width="1"/>
+          <path d="M 120 310 L 185 310 L 185 375 L 170 375 L 170 325 L 120 325 Z" fill="#e2e8f0" stroke="#333" stroke-width="1.5"/>
+          <text x="145" y="348" font-size="10" font-family="Georgia, serif" font-weight="bold" letter-spacing="1" text-anchor="middle" fill="#111">BAR</text>
+
+          <rect x="44" y="390" width="156" height="80" fill="#f1f5f9" stroke="#333" stroke-width="1.2"/>
+          <text x="122" y="435" font-size="9" font-family="Arial" font-weight="bold" letter-spacing="1" text-anchor="middle" fill="#555">KITCHEN</text>
+
+          <!-- TO FOH & STORAGE -->
+          <rect x="250" y="390" width="90" height="80" fill="#fff" stroke="#333" stroke-width="1.5"/>
+          <line x1="250" y1="390" x2="340" y2="470" stroke="#aaa" stroke-width="1"/>
+          <line x1="250" y1="470" x2="340" y2="390" stroke="#aaa" stroke-width="1"/>
+          <line x1="250" y1="430" x2="340" y2="430" stroke="#555" stroke-width="1"/>
+          <line x1="295" y1="390" x2="295" y2="470" stroke="#555" stroke-width="1"/>
+          <rect x="280" y="420" width="50" height="18" fill="#ffffff" stroke="#333" stroke-width="0.8"/>
+          <text x="305" y="432" font-size="7.5" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#111">TO FOH</text>
+
+          <rect x="580" y="395" width="50" height="75" fill="#f8fafc" stroke="#333" stroke-width="1.2"/>
+          <text x="605" y="435" font-size="8" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#555">STORAGE</text>
+
+          <!-- PRIVATE, RECEPTION & JANITOR -->
+          <rect x="840" y="80" width="95" height="230" fill="#f8fafc" stroke="#222" stroke-width="1.5"/>
+          <text x="888" y="195" font-size="10" font-family="Georgia, serif" font-weight="bold" letter-spacing="1" text-anchor="middle" fill="#333">Private</text>
+
+          <rect x="765" y="400" width="80" height="28" rx="3" fill="#e2e8f0" stroke="#333" stroke-width="1.2"/>
+          <rect x="770" y="403" width="70" height="22" rx="2" fill="#fff" stroke="#666" stroke-width="0.8"/>
+          <text x="805" y="417" font-size="8" font-family="Arial" font-weight="bold" letter-spacing="1" text-anchor="middle" fill="#111">RECEPTION</text>
+
+          <rect x="862" y="380" width="35" height="45" fill="#e2e8f0" stroke="#333" stroke-width="1.2"/>
+          <text x="880" y="407" font-size="7" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#111">JANITOR</text>
+          <text x="930" y="380" font-size="8" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#333">TOILET</text>
+
+          <line x1="770" y1="470" x2="840" y2="470" stroke="#2563eb" stroke-width="3"/>
+          <text x="805" y="482" font-size="7" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#2563eb">AUTOMATIC GLASS SLIDING DOOR</text>
+
+          <!-- Perimeter Lounge Sofas -->
+          <rect x="700" y="40" width="30" height="15" rx="3" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1"/>
+          <text x="715" y="50" font-size="6" text-anchor="middle" fill="#666">Sofa</text>
+          <rect x="735" y="40" width="55" height="15" rx="3" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1"/>
+          <text x="762" y="50" font-size="6" text-anchor="middle" fill="#666">Long Sofa</text>
+          <rect x="740" y="348" width="80" height="16" rx="3" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1"/>
+          <text x="780" y="359" font-size="7" text-anchor="middle" fill="#666">Long Sofa</text>
+          <rect x="660" y="460" width="60" height="15" rx="3" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1"/>
+          <text x="690" y="470" font-size="6.5" text-anchor="middle" fill="#666">Long Sofa</text>
+          <rect x="860" y="460" width="65" height="15" rx="3" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1"/>
+          <text x="892" y="470" font-size="6.5" text-anchor="middle" fill="#666">Long Sofa</text>
+
+          <!-- ========================================================== -->
+          <!-- 1. A ROW SEATING (26 SEATS)                                -->
+          <!-- ========================================================== -->
+          <text x="200" y="90" font-size="11" font-family="Georgia, serif" font-weight="bold" letter-spacing="2" text-anchor="middle" fill="#4b5563">A ROW</text>
+
+          <!-- Table A Top-Left: A21-A26 (6 Pax) -->
+          <rect x="125" y="125" width="66" height="30" fill="#ede8df" stroke="#78716c" stroke-width="1.2" rx="2"/>
+          <text x="158" y="143" font-size="8" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#57534e">6 Pax</text>
+          <g class="interactive-seat" id="seat-A26" data-seat="A26" onclick="toggleSeat('A26')"><rect class="chair-body" x="127" y="103" width="18" height="18" rx="4"/><text x="136" y="115" font-size="7" text-anchor="middle">A26</text></g>
+          <g class="interactive-seat" id="seat-A24" data-seat="A24" onclick="toggleSeat('A24')"><rect class="chair-body" x="149" y="103" width="18" height="18" rx="4"/><text x="158" y="115" font-size="7" text-anchor="middle">A24</text></g>
+          <g class="interactive-seat" id="seat-A22" data-seat="A22" onclick="toggleSeat('A22')"><rect class="chair-body" x="171" y="103" width="18" height="18" rx="4"/><text x="180" y="115" font-size="7" text-anchor="middle">A22</text></g>
+          <g class="interactive-seat" id="seat-A25" data-seat="A25" onclick="toggleSeat('A25')"><rect class="chair-body" x="127" y="159" width="18" height="18" rx="4"/><text x="136" y="171" font-size="7" text-anchor="middle">A25</text></g>
+          <g class="interactive-seat" id="seat-A23" data-seat="A23" onclick="toggleSeat('A23')"><rect class="chair-body" x="149" y="159" width="18" height="18" rx="4"/><text x="158" y="171" font-size="7" text-anchor="middle">A23</text></g>
+          <g class="interactive-seat" id="seat-A21" data-seat="A21" onclick="toggleSeat('A21')"><rect class="chair-body" x="171" y="159" width="18" height="18" rx="4"/><text x="180" y="171" font-size="7" text-anchor="middle">A21</text></g>
+
+          <!-- Table A Top-Right: A15-A20 (6 Pax) -->
+          <rect x="214" y="125" width="66" height="30" fill="#ede8df" stroke="#78716c" stroke-width="1.2" rx="2"/>
+          <text x="247" y="143" font-size="8" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#57534e">6 Pax</text>
+          <g class="interactive-seat" id="seat-A20" data-seat="A20" onclick="toggleSeat('A20')"><rect class="chair-body" x="216" y="103" width="18" height="18" rx="4"/><text x="225" y="115" font-size="7" text-anchor="middle">A20</text></g>
+          <g class="interactive-seat" id="seat-A18" data-seat="A18" onclick="toggleSeat('A18')"><rect class="chair-body" x="238" y="103" width="18" height="18" rx="4"/><text x="247" y="115" font-size="7" text-anchor="middle">A18</text></g>
+          <g class="interactive-seat" id="seat-A16" data-seat="A16" onclick="toggleSeat('A16')"><rect class="chair-body" x="260" y="103" width="18" height="18" rx="4"/><text x="269" y="115" font-size="7" text-anchor="middle">A16</text></g>
+          <g class="interactive-seat" id="seat-A19" data-seat="A19" onclick="toggleSeat('A19')"><rect class="chair-body" x="216" y="159" width="18" height="18" rx="4"/><text x="225" y="171" font-size="7" text-anchor="middle">A19</text></g>
+          <g class="interactive-seat" id="seat-A17" data-seat="A17" onclick="toggleSeat('A17')"><rect class="chair-body" x="238" y="159" width="18" height="18" rx="4"/><text x="247" y="171" font-size="7" text-anchor="middle">A17</text></g>
+          <g class="interactive-seat" id="seat-A15" data-seat="A15" onclick="toggleSeat('A15')"><rect class="chair-body" x="260" y="159" width="18" height="18" rx="4"/><text x="269" y="171" font-size="7" text-anchor="middle">A15</text></g>
+
+          <!-- Table A Bottom-Left: A9-A14 (6 Pax) -->
+          <rect x="125" y="205" width="66" height="30" fill="#ede8df" stroke="#78716c" stroke-width="1.2" rx="2"/>
+          <text x="158" y="223" font-size="8" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#57534e">6 Pax</text>
+          <g class="interactive-seat" id="seat-A14" data-seat="A14" onclick="toggleSeat('A14')"><rect class="chair-body" x="127" y="183" width="18" height="18" rx="4"/><text x="136" y="195" font-size="7" text-anchor="middle">A14</text></g>
+          <g class="interactive-seat" id="seat-A12" data-seat="A12" onclick="toggleSeat('A12')"><rect class="chair-body" x="149" y="183" width="18" height="18" rx="4"/><text x="158" y="195" font-size="7" text-anchor="middle">A12</text></g>
+          <g class="interactive-seat" id="seat-A10" data-seat="A10" onclick="toggleSeat('A10')"><rect class="chair-body" x="171" y="183" width="18" height="18" rx="4"/><text x="180" y="195" font-size="7" text-anchor="middle">A10</text></g>
+          <g class="interactive-seat" id="seat-A13" data-seat="A13" onclick="toggleSeat('A13')"><rect class="chair-body" x="127" y="239" width="18" height="18" rx="4"/><text x="136" y="251" font-size="7" text-anchor="middle">A13</text></g>
+          <g class="interactive-seat" id="seat-A11" data-seat="A11" onclick="toggleSeat('A11')"><rect class="chair-body" x="149" y="239" width="18" height="18" rx="4"/><text x="158" y="251" font-size="7" text-anchor="middle">A11</text></g>
+          <g class="interactive-seat" id="seat-A9" data-seat="A9" onclick="toggleSeat('A9')"><rect class="chair-body" x="171" y="239" width="18" height="18" rx="4"/><text x="180" y="251" font-size="7" text-anchor="middle">A9</text></g>
+
+          <!-- Table A Bottom-Right: A1-A8 (8 Pax) -->
+          <rect x="214" y="205" width="88" height="30" fill="#ede8df" stroke="#78716c" stroke-width="1.2" rx="2"/>
+          <text x="258" y="223" font-size="8" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#57534e">8 Pax</text>
+          <g class="interactive-seat" id="seat-A8" data-seat="A8" onclick="toggleSeat('A8')"><rect class="chair-body" x="216" y="183" width="18" height="18" rx="4"/><text x="225" y="195" font-size="7" text-anchor="middle">A8</text></g>
+          <g class="interactive-seat" id="seat-A6" data-seat="A6" onclick="toggleSeat('A6')"><rect class="chair-body" x="238" y="183" width="18" height="18" rx="4"/><text x="247" y="195" font-size="7" text-anchor="middle">A6</text></g>
+          <g class="interactive-seat" id="seat-A4" data-seat="A4" onclick="toggleSeat('A4')"><rect class="chair-body" x="260" y="183" width="18" height="18" rx="4"/><text x="269" y="195" font-size="7" text-anchor="middle">A4</text></g>
+          <g class="interactive-seat" id="seat-A2" data-seat="A2" onclick="toggleSeat('A2')"><rect class="chair-body" x="282" y="183" width="18" height="18" rx="4"/><text x="291" y="195" font-size="7" text-anchor="middle">A2</text></g>
+          <g class="interactive-seat" id="seat-A7" data-seat="A7" onclick="toggleSeat('A7')"><rect class="chair-body" x="216" y="239" width="18" height="18" rx="4"/><text x="225" y="251" font-size="7" text-anchor="middle">A7</text></g>
+          <g class="interactive-seat" id="seat-A5" data-seat="A5" onclick="toggleSeat('A5')"><rect class="chair-body" x="238" y="239" width="18" height="18" rx="4"/><text x="247" y="251" font-size="7" text-anchor="middle">A5</text></g>
+          <g class="interactive-seat" id="seat-A3" data-seat="A3" onclick="toggleSeat('A3')"><rect class="chair-body" x="260" y="239" width="18" height="18" rx="4"/><text x="269" y="251" font-size="7" text-anchor="middle">A3</text></g>
+          <g class="interactive-seat" id="seat-A1" data-seat="A1" onclick="toggleSeat('A1')"><rect class="chair-body" x="282" y="239" width="18" height="18" rx="4"/><text x="291" y="251" font-size="7" text-anchor="middle">A1</text></g>
+
+          <!-- ========================================================== -->
+          <!-- 2. B ROW SEATING (24 SEATS)                                -->
+          <!-- ========================================================== -->
+          <text x="485" y="280" font-size="11" font-family="Georgia, serif" font-weight="bold" letter-spacing="2" text-anchor="middle" fill="#4b5563">B ROW</text>
+
+          <!-- Group B Left: B17-B24 (8 Pax) -->
+          <rect x="390" y="293" width="30" height="88" fill="#ede8df" stroke="#78716c" stroke-width="1.2" rx="2"/>
+          <text x="405" y="340" font-size="7.5" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#57534e" transform="rotate(-90 405 340)">8 Pax</text>
+          <g class="interactive-seat" id="seat-B17" data-seat="B17" onclick="toggleSeat('B17')"><rect class="chair-body" x="368" y="295" width="18" height="18" rx="4"/><text x="377" y="307" font-size="6.5" text-anchor="middle">B17</text></g>
+          <g class="interactive-seat" id="seat-B19" data-seat="B19" onclick="toggleSeat('B19')"><rect class="chair-body" x="368" y="317" width="18" height="18" rx="4"/><text x="377" y="329" font-size="6.5" text-anchor="middle">B19</text></g>
+          <g class="interactive-seat" id="seat-B21" data-seat="B21" onclick="toggleSeat('B21')"><rect class="chair-body" x="368" y="339" width="18" height="18" rx="4"/><text x="377" y="351" font-size="6.5" text-anchor="middle">B21</text></g>
+          <g class="interactive-seat" id="seat-B23" data-seat="B23" onclick="toggleSeat('B23')"><rect class="chair-body" x="368" y="361" width="18" height="18" rx="4"/><text x="377" y="373" font-size="6.5" text-anchor="middle">B23</text></g>
+          <g class="interactive-seat" id="seat-B18" data-seat="B18" onclick="toggleSeat('B18')"><rect class="chair-body" x="424" y="295" width="18" height="18" rx="4"/><text x="433" y="307" font-size="6.5" text-anchor="middle">B18</text></g>
+          <g class="interactive-seat" id="seat-B20" data-seat="B20" onclick="toggleSeat('B20')"><rect class="chair-body" x="424" y="317" width="18" height="18" rx="4"/><text x="433" y="329" font-size="6.5" text-anchor="middle">B20</text></g>
+          <g class="interactive-seat" id="seat-B22" data-seat="B22" onclick="toggleSeat('B22')"><rect class="chair-body" x="424" y="339" width="18" height="18" rx="4"/><text x="433" y="351" font-size="6.5" text-anchor="middle">B22</text></g>
+          <g class="interactive-seat" id="seat-B24" data-seat="B24" onclick="toggleSeat('B24')"><rect class="chair-body" x="424" y="361" width="18" height="18" rx="4"/><text x="433" y="373" font-size="6.5" text-anchor="middle">B24</text></g>
+
+          <!-- Group B Center: B1-B8 (8 Pax) -->
+          <rect x="477" y="293" width="30" height="88" fill="#ede8df" stroke="#78716c" stroke-width="1.2" rx="2"/>
+          <text x="492" y="340" font-size="7.5" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#57534e" transform="rotate(-90 492 340)">8 Pax</text>
+          <g class="interactive-seat" id="seat-B1" data-seat="B1" onclick="toggleSeat('B1')"><rect class="chair-body" x="455" y="295" width="18" height="18" rx="4"/><text x="464" y="307" font-size="7" text-anchor="middle">B1</text></g>
+          <g class="interactive-seat" id="seat-B3" data-seat="B3" onclick="toggleSeat('B3')"><rect class="chair-body" x="455" y="317" width="18" height="18" rx="4"/><text x="464" y="329" font-size="7" text-anchor="middle">B3</text></g>
+          <g class="interactive-seat" id="seat-B5" data-seat="B5" onclick="toggleSeat('B5')"><rect class="chair-body" x="455" y="339" width="18" height="18" rx="4"/><text x="464" y="351" font-size="7" text-anchor="middle">B5</text></g>
+          <g class="interactive-seat" id="seat-B7" data-seat="B7" onclick="toggleSeat('B7')"><rect class="chair-body" x="455" y="361" width="18" height="18" rx="4"/><text x="464" y="373" font-size="7" text-anchor="middle">B7</text></g>
+          <g class="interactive-seat" id="seat-B2" data-seat="B2" onclick="toggleSeat('B2')"><rect class="chair-body" x="511" y="295" width="18" height="18" rx="4"/><text x="520" y="307" font-size="7" text-anchor="middle">B2</text></g>
+          <g class="interactive-seat" id="seat-B4" data-seat="B4" onclick="toggleSeat('B4')"><rect class="chair-body" x="511" y="317" width="18" height="18" rx="4"/><text x="520" y="329" font-size="7" text-anchor="middle">B4</text></g>
+          <g class="interactive-seat" id="seat-B6" data-seat="B6" onclick="toggleSeat('B6')"><rect class="chair-body" x="511" y="339" width="18" height="18" rx="4"/><text x="520" y="351" font-size="7" text-anchor="middle">B6</text></g>
+          <g class="interactive-seat" id="seat-B8" data-seat="B8" onclick="toggleSeat('B8')"><rect class="chair-body" x="511" y="361" width="18" height="18" rx="4"/><text x="520" y="373" font-size="7" text-anchor="middle">B8</text></g>
+
+          <!-- Group B Right: B9-B16 (8 Pax) -->
+          <rect x="562" y="293" width="30" height="88" fill="#ede8df" stroke="#78716c" stroke-width="1.2" rx="2"/>
+          <text x="577" y="340" font-size="7.5" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#57534e" transform="rotate(-90 577 340)">8 Pax</text>
+          <g class="interactive-seat" id="seat-B9" data-seat="B9" onclick="toggleSeat('B9')"><rect class="chair-body" x="540" y="295" width="18" height="18" rx="4"/><text x="549" y="307" font-size="7" text-anchor="middle">B9</text></g>
+          <g class="interactive-seat" id="seat-B11" data-seat="B11" onclick="toggleSeat('B11')"><rect class="chair-body" x="540" y="317" width="18" height="18" rx="4"/><text x="549" y="329" font-size="6.5" text-anchor="middle">B11</text></g>
+          <g class="interactive-seat" id="seat-B13" data-seat="B13" onclick="toggleSeat('B13')"><rect class="chair-body" x="540" y="339" width="18" height="18" rx="4"/><text x="549" y="351" font-size="6.5" text-anchor="middle">B13</text></g>
+          <g class="interactive-seat" id="seat-B15" data-seat="B15" onclick="toggleSeat('B15')"><rect class="chair-body" x="540" y="361" width="18" height="18" rx="4"/><text x="549" y="373" font-size="6.5" text-anchor="middle">B15</text></g>
+          <g class="interactive-seat" id="seat-B10" data-seat="B10" onclick="toggleSeat('B10')"><rect class="chair-body" x="596" y="295" width="18" height="18" rx="4"/><text x="605" y="307" font-size="6.5" text-anchor="middle">B10</text></g>
+          <g class="interactive-seat" id="seat-B12" data-seat="B12" onclick="toggleSeat('B12')"><rect class="chair-body" x="596" y="317" width="18" height="18" rx="4"/><text x="605" y="329" font-size="6.5" text-anchor="middle">B12</text></g>
+          <g class="interactive-seat" id="seat-B14" data-seat="B14" onclick="toggleSeat('B14')"><rect class="chair-body" x="596" y="339" width="18" height="18" rx="4"/><text x="605" y="351" font-size="6.5" text-anchor="middle">B14</text></g>
+          <g class="interactive-seat" id="seat-B16" data-seat="B16" onclick="toggleSeat('B16')"><rect class="chair-body" x="596" y="361" width="18" height="18" rx="4"/><text x="605" y="373" font-size="6.5" text-anchor="middle">B16</text></g>
+
+          <!-- ========================================================== -->
+          <!-- 3. C ROW SEATING (20 SEATS)                                -->
+          <!-- ========================================================== -->
+          <text x="770" y="160" font-size="11" font-family="Georgia, serif" font-weight="bold" letter-spacing="2" text-anchor="middle" fill="#4b5563">C ROW</text>
+
+          <!-- Group C Top: C11-C20 (10 Pax) -->
+          <rect x="715" y="185" width="110" height="30" fill="#ede8df" stroke="#78716c" stroke-width="1.2" rx="2"/>
+          <text x="770" y="203" font-size="8" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#57534e">10 Pax</text>
+          <g class="interactive-seat" id="seat-C12" data-seat="C12" onclick="toggleSeat('C12')"><rect class="chair-body" x="717" y="163" width="18" height="18" rx="4"/><text x="726" y="175" font-size="6.5" text-anchor="middle">C12</text></g>
+          <g class="interactive-seat" id="seat-C14" data-seat="C14" onclick="toggleSeat('C14')"><rect class="chair-body" x="739" y="163" width="18" height="18" rx="4"/><text x="748" y="175" font-size="6.5" text-anchor="middle">C14</text></g>
+          <g class="interactive-seat" id="seat-C16" data-seat="C16" onclick="toggleSeat('C16')"><rect class="chair-body" x="761" y="163" width="18" height="18" rx="4"/><text x="770" y="175" font-size="6.5" text-anchor="middle">C16</text></g>
+          <g class="interactive-seat" id="seat-C18" data-seat="C18" onclick="toggleSeat('C18')"><rect class="chair-body" x="783" y="163" width="18" height="18" rx="4"/><text x="792" y="175" font-size="6.5" text-anchor="middle">C18</text></g>
+          <g class="interactive-seat" id="seat-C20" data-seat="C20" onclick="toggleSeat('C20')"><rect class="chair-body" x="805" y="163" width="18" height="18" rx="4"/><text x="814" y="175" font-size="6.5" text-anchor="middle">C20</text></g>
+          <g class="interactive-seat" id="seat-C11" data-seat="C11" onclick="toggleSeat('C11')"><rect class="chair-body" x="717" y="219" width="18" height="18" rx="4"/><text x="726" y="231" font-size="6.5" text-anchor="middle">C11</text></g>
+          <g class="interactive-seat" id="seat-C13" data-seat="C13" onclick="toggleSeat('C13')"><rect class="chair-body" x="739" y="219" width="18" height="18" rx="4"/><text x="748" y="231" font-size="6.5" text-anchor="middle">C13</text></g>
+          <g class="interactive-seat" id="seat-C15" data-seat="C15" onclick="toggleSeat('C15')"><rect class="chair-body" x="761" y="219" width="18" height="18" rx="4"/><text x="770" y="231" font-size="6.5" text-anchor="middle">C15</text></g>
+          <g class="interactive-seat" id="seat-C17" data-seat="C17" onclick="toggleSeat('C17')"><rect class="chair-body" x="783" y="219" width="18" height="18" rx="4"/><text x="792" y="231" font-size="6.5" text-anchor="middle">C17</text></g>
+          <g class="interactive-seat" id="seat-C19" data-seat="C19" onclick="toggleSeat('C19')"><rect class="chair-body" x="805" y="219" width="18" height="18" rx="4"/><text x="814" y="231" font-size="6.5" text-anchor="middle">C19</text></g>
+
+          <!-- Group C Bottom: C1-C10 (10 Pax) -->
+          <rect x="715" y="280" width="110" height="30" fill="#ede8df" stroke="#78716c" stroke-width="1.2" rx="2"/>
+          <text x="770" y="298" font-size="8" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#57534e">10 Pax</text>
+          <g class="interactive-seat" id="seat-C2" data-seat="C2" onclick="toggleSeat('C2')"><rect class="chair-body" x="717" y="258" width="18" height="18" rx="4"/><text x="726" y="270" font-size="7" text-anchor="middle">C2</text></g>
+          <g class="interactive-seat" id="seat-C4" data-seat="C4" onclick="toggleSeat('C4')"><rect class="chair-body" x="739" y="258" width="18" height="18" rx="4"/><text x="748" y="270" font-size="7" text-anchor="middle">C4</text></g>
+          <g class="interactive-seat" id="seat-C6" data-seat="C6" onclick="toggleSeat('C6')"><rect class="chair-body" x="761" y="258" width="18" height="18" rx="4"/><text x="770" y="270" font-size="7" text-anchor="middle">C6</text></g>
+          <g class="interactive-seat" id="seat-C8" data-seat="C8" onclick="toggleSeat('C8')"><rect class="chair-body" x="783" y="258" width="18" height="18" rx="4"/><text x="792" y="270" font-size="7" text-anchor="middle">C8</text></g>
+          <g class="interactive-seat" id="seat-C10" data-seat="C10" onclick="toggleSeat('C10')"><rect class="chair-body" x="805" y="258" width="18" height="18" rx="4"/><text x="814" y="270" font-size="6.5" text-anchor="middle">C10</text></g>
+          <g class="interactive-seat" id="seat-C1" data-seat="C1" onclick="toggleSeat('C1')"><rect class="chair-body" x="717" y="314" width="18" height="18" rx="4"/><text x="726" y="326" font-size="7" text-anchor="middle">C1</text></g>
+          <g class="interactive-seat" id="seat-C3" data-seat="C3" onclick="toggleSeat('C3')"><rect class="chair-body" x="739" y="314" width="18" height="18" rx="4"/><text x="748" y="326" font-size="7" text-anchor="middle">C3</text></g>
+          <g class="interactive-seat" id="seat-C5" data-seat="C5" onclick="toggleSeat('C5')"><rect class="chair-body" x="761" y="314" width="18" height="18" rx="4"/><text x="770" y="326" font-size="7" text-anchor="middle">C5</text></g>
+          <g class="interactive-seat" id="seat-C7" data-seat="C7" onclick="toggleSeat('C7')"><rect class="chair-body" x="783" y="314" width="18" height="18" rx="4"/><text x="792" y="326" font-size="7" text-anchor="middle">C7</text></g>
+          <g class="interactive-seat" id="seat-C9" data-seat="C9" onclick="toggleSeat('C9')"><rect class="chair-body" x="805" y="314" width="18" height="18" rx="4"/><text x="814" y="326" font-size="7" text-anchor="middle">C9</text></g>
+
+          <!-- ========================================================== -->
+          <!-- 4. D ROW / VIP SOFA (6 SEATS)                              -->
+          <!-- ========================================================== -->
+          <text x="485" y="405" font-size="10" font-family="Georgia, serif" font-weight="bold" letter-spacing="1.5" text-anchor="middle" fill="#4b5563">D ROW / VIP</text>
+
+          <!-- D6-D5 -->
+          <rect x="402" y="415" width="46" height="22" fill="#ede8df" stroke="#78716c" stroke-width="1.2" rx="2"/>
+          <text x="425" y="429" font-size="7.5" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#57534e">2 Pax</text>
+          <g class="interactive-seat" id="seat-D6" data-seat="D6" onclick="toggleSeat('D6')"><rect class="chair-body" x="402" y="442" width="21" height="20" rx="4"/><text x="412" y="454" font-size="6.5" text-anchor="middle">D6</text><text x="412" y="460" font-size="5" text-anchor="middle" fill="#ddd">Sofa</text></g>
+          <g class="interactive-seat" id="seat-D5" data-seat="D5" onclick="toggleSeat('D5')"><rect class="chair-body" x="427" y="442" width="21" height="20" rx="4"/><text x="437" y="454" font-size="6.5" text-anchor="middle">D5</text><text x="437" y="460" font-size="5" text-anchor="middle" fill="#ddd">Sofa</text></g>
+
+          <!-- D1-D2 -->
+          <rect x="462" y="415" width="46" height="22" fill="#ede8df" stroke="#78716c" stroke-width="1.2" rx="2"/>
+          <text x="485" y="429" font-size="7.5" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#57534e">2 Pax</text>
+          <g class="interactive-seat" id="seat-D1" data-seat="D1" onclick="toggleSeat('D1')"><rect class="chair-body" x="462" y="442" width="21" height="20" rx="4"/><text x="472" y="454" font-size="6.5" text-anchor="middle">D1</text><text x="472" y="460" font-size="5" text-anchor="middle" fill="#ddd">Sofa</text></g>
+          <g class="interactive-seat" id="seat-D2" data-seat="D2" onclick="toggleSeat('D2')"><rect class="chair-body" x="487" y="442" width="21" height="20" rx="4"/><text x="497" y="454" font-size="6.5" text-anchor="middle">D2</text><text x="497" y="460" font-size="5" text-anchor="middle" fill="#ddd">Sofa</text></g>
+
+          <!-- D3-D4 -->
+          <rect x="522" y="415" width="46" height="22" fill="#ede8df" stroke="#78716c" stroke-width="1.2" rx="2"/>
+          <text x="545" y="429" font-size="7.5" font-family="Arial" font-weight="bold" text-anchor="middle" fill="#57534e">2 Pax</text>
+          <g class="interactive-seat" id="seat-D3" data-seat="D3" onclick="toggleSeat('D3')"><rect class="chair-body" x="522" y="442" width="21" height="20" rx="4"/><text x="532" y="454" font-size="6.5" text-anchor="middle">D3</text><text x="532" y="460" font-size="5" text-anchor="middle" fill="#ddd">Sofa</text></g>
+          <g class="interactive-seat" id="seat-D4" data-seat="D4" onclick="toggleSeat('D4')"><rect class="chair-body" x="547" y="442" width="21" height="20" rx="4"/><text x="557" y="454" font-size="6.5" text-anchor="middle">D4</text><text x="557" y="460" font-size="5" text-anchor="middle" fill="#ddd">Sofa</text></g>
+
+          <!-- BOTTOM ARCHITECTURAL LEGEND TABLE -->
+          <g transform="translate(18, 545)">
+            <rect x="0" y="0" width="944" height="110" fill="#ffffff" stroke="#111" stroke-width="1.5"/>
+            <rect x="0" y="0" width="180" height="110" fill="#ffffff" stroke="#111" stroke-width="1"/>
+            <text x="90" y="45" font-size="16" font-family="Georgia, serif" font-weight="bold" text-anchor="middle" fill="#111">The</text>
+            <text x="90" y="65" font-size="20" font-family="Georgia, serif" font-style="italic" font-weight="bold" text-anchor="middle" fill="#111">Music Place</text>
+            <text x="90" y="82" font-size="8" font-family="Arial" letter-spacing="2" text-anchor="middle" fill="#444">AT FAIRMONT JAKARTA</text>
+
+            <rect x="180" y="0" width="210" height="75" fill="#ffffff" stroke="#111" stroke-width="1"/>
+            <text x="285" y="45" font-size="14" font-family="Arial" font-weight="bold" letter-spacing="3" text-anchor="middle" fill="#111">DINING TABLE</text>
+            <rect x="180" y="75" width="210" height="35" fill="#ffffff" stroke="#111" stroke-width="1"/>
+            <text x="285" y="98" font-size="12" font-family="Arial" font-weight="bold" letter-spacing="2" text-anchor="middle" fill="#111">MENU SETS</text>
+
+            <g font-family="Arial" font-size="10" font-weight="bold" fill="#111">
+              <rect x="390" y="0" width="210" height="22" fill="#fff" stroke="#111" stroke-width="0.8"/>
+              <text x="495" y="15" text-anchor="middle">G R O U P   A</text>
+              <rect x="600" y="0" width="180" height="22" fill="#fff" stroke="#111" stroke-width="0.8"/>
+              <text x="690" y="15" text-anchor="middle">1 3   T A B L E S</text>
+              <rect x="780" y="0" width="164" height="22" fill="#fff" stroke="#111" stroke-width="0.8"/>
+              <text x="862" y="15" text-anchor="middle">2 6   S E A T S</text>
+
+              <rect x="390" y="22" width="210" height="22" fill="#fff" stroke="#111" stroke-width="0.8"/>
+              <text x="495" y="37" text-anchor="middle">G R O U P   B</text>
+              <rect x="600" y="22" width="180" height="22" fill="#fff" stroke="#111" stroke-width="0.8"/>
+              <text x="690" y="37" text-anchor="middle">1 2   T A B L E S</text>
+              <rect x="780" y="22" width="164" height="22" fill="#fff" stroke="#111" stroke-width="0.8"/>
+              <text x="862" y="37" text-anchor="middle">2 4   S E A T S</text>
+
+              <rect x="390" y="44" width="210" height="22" fill="#fff" stroke="#111" stroke-width="0.8"/>
+              <text x="495" y="59" text-anchor="middle">G R O U P   C</text>
+              <rect x="600" y="44" width="180" height="22" fill="#fff" stroke="#111" stroke-width="0.8"/>
+              <text x="690" y="59" text-anchor="middle">1 0   T A B L E S</text>
+              <rect x="780" y="44" width="164" height="22" fill="#fff" stroke="#111" stroke-width="0.8"/>
+              <text x="862" y="59" text-anchor="middle">2 0   S E A T S</text>
+
+              <rect x="390" y="66" width="210" height="22" fill="#fff" stroke="#111" stroke-width="0.8"/>
+              <text x="495" y="81" text-anchor="middle">G R O U P   D</text>
+              <rect x="600" y="66" width="180" height="22" fill="#fff" stroke="#111" stroke-width="0.8"/>
+              <text x="690" y="81" text-anchor="middle">6   T A B L E S</text>
+              <rect x="780" y="66" width="164" height="22" fill="#fff" stroke="#111" stroke-width="0.8"/>
+              <text x="862" y="81" text-anchor="middle">6   S E A T S</text>
+
+              <rect x="390" y="88" width="210" height="22" fill="#f8fafc" stroke="#111" stroke-width="0.8"/>
+              <text x="495" y="103" text-anchor="middle">T O T A L</text>
+              <rect x="600" y="88" width="180" height="22" fill="#f8fafc" stroke="#111" stroke-width="0.8"/>
+              <text x="690" y="103" text-anchor="middle">4 1   T A B L E S</text>
+              <rect x="780" y="88" width="164" height="22" fill="#f8fafc" stroke="#111" stroke-width="0.8"/>
+              <text x="862" y="103" text-anchor="middle" fill="#b91c1c">7 6   S E A T S</text>
+            </g>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Floating Action Bar -->
+    <div class="floating-action-bar" id="floatingBar">
+      <div class="floating-info">
+        <span>✨ Terpilih: <strong id="float-count" style="color:#fff;">0</strong> Kursi</span>
+      </div>
+      <button class="btn btn-gold" onclick="focusReservationForm()">📝 Isi Reservasi</button>
+      <button class="btn btn-danger" onclick="releaseSelectedSeats()">🔓 Release</button>
+      <button class="btn btn-outline" style="padding:6px 8px;" onclick="clearSelection()">✕</button>
+    </div>
+
+  </div>
+
+  <!-- Right Column: Form & Active Bookings -->
+  <div class="sidebar sidebar-right" id="sidebar-right">
+    
+    <!-- Reservation Form Panel -->
+    <div class="card-sec">
+      <div class="sec-title">
+        <span>Form Reservasi</span>
+        <span style="font-size:10px; color:var(--gold-light);" id="selected-summary-label">0 Kursi</span>
+      </div>
+      
+      <div class="form-group">
+        <label>Kursi Terpilih (<span id="selected-count-label">0</span>)</label>
+        <div class="badge-box" id="selectedSeatsBadges">
+          <span style="color:#666; font-size:11px; align-self:center;">Klik kursi pada denah</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="guestName">Nama Pemesan / Tamu *</label>
+        <input type="text" id="guestName" class="form-control" placeholder="Contoh: Bpk. Hendra Kusuma">
+      </div>
+
+      <div class="form-group">
+        <label for="guestPhone">No. Telepon / WhatsApp</label>
+        <input type="tel" id="guestPhone" class="form-control" placeholder="+62 812-3456-7890">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+        <div class="form-group">
+          <label for="paxCount">Jumlah Pax</label>
+          <input type="number" id="paxCount" class="form-control" min="1" max="76" value="1">
+        </div>
+        <div class="form-group">
+          <label for="resTime">Waktu / Show</label>
+          <input type="time" id="resTime" class="form-control" value="19:30">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="resDate">Tanggal</label>
+        <input type="date" id="resDate" class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="resNotes">Catatan Tambahan</label>
+        <input type="text" id="resNotes" class="form-control" placeholder="VIP Guest, Birthday, dsb.">
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
+        <button class="btn btn-gold" onclick="applyReservation('reserved')">
+          ✓ Konfirmasi Reservasi (Reserved)
+        </button>
+        <button class="btn btn-outline" style="border-color:#6b7280;" onclick="applyReservation('blocked')">
+          🔒 Block Seat (Hold / VIP)
+        </button>
+        <button class="btn btn-danger" onclick="releaseSelectedSeats()">
+          🔓 Release (Jadikan Available)
+        </button>
+      </div>
+    </div>
+
+    <!-- Active Reservations Table with Live Search -->
+    <div class="card-sec" style="flex:1;">
+      <div class="sec-title">
+        <span>Daftar Booking Aktif</span>
+        <button class="pill" style="font-size:9px;" onclick="renderReservationsTable()">Refresh</button>
+      </div>
+
+      <input type="text" id="searchBookings" class="search-input" placeholder="🔍 Cari Kursi, Nama, atau HP..." oninput="renderReservationsTable()">
+      
+      <div class="table-scroll">
+        <table class="res-table" id="bookingsTable">
+          <thead>
+            <tr>
+              <th>Seat</th>
+              <th>Nama</th>
+              <th>Pax</th>
+              <th>Status</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Tooltip -->
+<div class="seat-tooltip" id="seatTooltip"></div>
+
+<!-- Toast -->
+<div class="toast" id="toast">Notifikasi</div>
+
+<script>
+  const ALL_SEATS = [
+    'A1','A2','A3','A4','A5','A6','A7','A8','A9','A10',
+    'A11','A12','A13','A14','A15','A16','A17','A18','A19','A20',
+    'A21','A22','A23','A24','A25','A26',
+    'B1','B2','B3','B4','B5','B6','B7','B8','B9','B10',
+    'B11','B12','B13','B14','B15','B16','B17','B18','B19','B20',
+    'B21','B22','B23','B24',
+    'C1','C2','C3','C4','C5','C6','C7','C8','C9','C10',
+    'C11','C12','C13','C14','C15','C16','C17','C18','C19','C20',
+    'D1','D2','D3','D4','D5','D6'
+  ];
+
+  let seatsState = {};
+  let selectedSeats = new Set();
+  let currentZoom = 1;
+  let activeFilter = 'all';
+
+  let isDragging = false;
+  let startX = 0, startY = 0, scrollLeft = 0, scrollTop = 0;
+
+  function init() {
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('resDate').value = today;
+
+    const saved = localStorage.getItem('the_music_place_seating_76');
+    if (saved) {
+      try {
+        seatsState = JSON.parse(saved);
+      } catch(e) {
+        initDefaultSeats();
+      }
+    } else {
+      initDefaultSeats();
+    }
+
+    ALL_SEATS.forEach(seatId => {
+      if (!seatsState[seatId]) {
+        seatsState[seatId] = {
+          id: seatId,
+          row: seatId[0],
+          status: 'available',
+          guestName: '',
+          phone: '',
+          pax: 1,
+          date: today,
+          time: '19:30',
+          notes: ''
+        };
+      }
+    });
+
+    setupPanAndDrag();
+    setupTooltips();
+    updateUI();
+  }
+
+  function initDefaultSeats() {
+    seatsState = {};
+    const today = new Date().toISOString().split('T')[0];
+    ALL_SEATS.forEach(seatId => {
+      seatsState[seatId] = {
+        id: seatId,
+        row: seatId[0],
+        status: 'available',
+        guestName: '',
+        phone: '',
+        pax: 1,
+        date: today,
+        time: '19:30',
+        notes: ''
+      };
+    });
+  }
+
+  function saveToStorage() {
+    localStorage.setItem('the_music_place_seating_76', JSON.stringify(seatsState));
+  }
+
+  function toggleSeat(seatId) {
+    if (selectedSeats.has(seatId)) {
+      selectedSeats.delete(seatId);
+    } else {
+      selectedSeats.add(seatId);
+      if (selectedSeats.size === 1 && seatsState[seatId].status === 'reserved') {
+        const item = seatsState[seatId];
+        document.getElementById('guestName').value = item.guestName || '';
+        document.getElementById('guestPhone').value = item.phone || '';
+        document.getElementById('paxCount').value = item.pax || 1;
+        document.getElementById('resDate').value = item.date || document.getElementById('resDate').value;
+        document.getElementById('resTime').value = item.time || '19:30';
+        document.getElementById('resNotes').value = item.notes || '';
+      }
+    }
+    if (selectedSeats.size > 0) {
+      document.getElementById('paxCount').value = selectedSeats.size;
+    }
+    updateUI();
+  }
+
+  function selectRow(rowLetter) {
+    ALL_SEATS.filter(s => s.startsWith(rowLetter)).forEach(s => selectedSeats.add(s));
+    document.getElementById('paxCount').value = selectedSeats.size;
+    updateUI();
+  }
+
+  function selectAllSeats() {
+    ALL_SEATS.forEach(s => selectedSeats.add(s));
+    document.getElementById('paxCount').value = selectedSeats.size;
+    updateUI();
+  }
+
+  function clearSelection() {
+    selectedSeats.clear();
+    updateUI();
+  }
+
+  function applyReservation(newStatus) {
+    if (selectedSeats.size === 0) {
+      showToast('⚠️ Silakan klik dan pilih kursi pada denah terlebih dahulu!');
+      return;
+    }
+
+    const name = document.getElementById('guestName').value.trim();
+    const phone = document.getElementById('guestPhone').value.trim();
+    const pax = parseInt(document.getElementById('paxCount').value) || selectedSeats.size;
+    const date = document.getElementById('resDate').value;
+    const time = document.getElementById('resTime').value;
+    const notes = document.getElementById('resNotes').value.trim();
+
+    if (newStatus === 'reserved' && !name) {
+      showToast('⚠️ Masukkan Nama Pemesan untuk konfirmasi reservasi!');
+      document.getElementById('guestName').focus();
+      return;
+    }
+
+    selectedSeats.forEach(seatId => {
+      seatsState[seatId] = {
+        ...seatsState[seatId],
+        status: newStatus,
+        guestName: newStatus === 'reserved' ? name : (newStatus === 'blocked' ? 'BLOCKED / VIP' : ''),
+        phone: newStatus === 'reserved' ? phone : '',
+        pax: pax,
+        date: date,
+        time: time,
+        notes: notes
+      };
+    });
+
+    saveToStorage();
+    const count = selectedSeats.size;
+    selectedSeats.clear();
+    updateUI();
+    showToast(`✓ Berhasil memperbarui status ${count} kursi!`);
+  }
+
+  function releaseSelectedSeats() {
+    if (selectedSeats.size === 0) {
+      showToast('⚠️ Pilih kursi yang ingin di-release!');
+      return;
+    }
+
+    selectedSeats.forEach(seatId => {
+      seatsState[seatId] = {
+        id: seatId,
+        row: seatId[0],
+        status: 'available',
+        guestName: '',
+        phone: '',
+        pax: 1,
+        date: '',
+        time: '',
+        notes: ''
+      };
+    });
+
+    saveToStorage();
+    const count = selectedSeats.size;
+    selectedSeats.clear();
+    document.getElementById('guestName').value = '';
+    document.getElementById('guestPhone').value = '';
+    document.getElementById('resNotes').value = '';
+    updateUI();
+    showToast(`🔓 ${count} kursi kembali Available!`);
+  }
+
+  function releaseSingleSeat(seatId) {
+    seatsState[seatId] = {
+      id: seatId,
+      row: seatId[0],
+      status: 'available',
+      guestName: '',
+      phone: '',
+      pax: 1,
+      date: '',
+      time: '',
+      notes: ''
+    };
+    saveToStorage();
+    updateUI();
+    showToast(`Kursi ${seatId} telah di-release.`);
+  }
+
+  function filterByStatus(status) {
+    activeFilter = status;
+    ALL_SEATS.forEach(seatId => {
+      const el = document.getElementById(`seat-${seatId}`);
+      if (!el) return;
+      const curStatus = selectedSeats.has(seatId) ? 'selected' : seatsState[seatId].status;
+
+      if (status === 'all' || curStatus === status) {
+        el.classList.remove('dimmed');
+      } else {
+        el.classList.add('dimmed');
+      }
+    });
+    showToast(status === 'all' ? 'Menampilkan semua kursi' : `Filter aktif: ${status.toUpperCase()}`);
+  }
+
+  function updateUI() {
+    let avail = 0, reserved = 0, blocked = 0;
+
+    ALL_SEATS.forEach(seatId => {
+      const el = document.getElementById(`seat-${seatId}`);
+      const data = seatsState[seatId];
+      if (!el || !data) return;
+
+      const isSelected = selectedSeats.has(seatId);
+
+      if (isSelected) {
+        el.setAttribute('data-status', 'selected');
+      } else {
+        el.setAttribute('data-status', data.status);
+      }
+
+      if (activeFilter !== 'all') {
+        const curStatus = isSelected ? 'selected' : data.status;
+        if (curStatus === activeFilter) {
+          el.classList.remove('dimmed');
+        } else {
+          el.classList.add('dimmed');
+        }
+      } else {
+        el.classList.remove('dimmed');
+      }
+
+      if (data.status === 'available') avail++;
+      else if (data.status === 'reserved') reserved++;
+      else if (data.status === 'blocked') blocked++;
+    });
+
+    document.getElementById('stat-avail').innerText = avail;
+    document.getElementById('stat-selected').innerText = selectedSeats.size;
+    document.getElementById('stat-reserved').innerText = reserved;
+    document.getElementById('stat-blocked').innerText = blocked;
+
+    const occPct = Math.round(((reserved + blocked) / 76) * 100);
+    document.getElementById('occupancy-rate').innerText = `${occPct}%`;
+    document.getElementById('occupancy-bar').style.width = `${occPct}%`;
+
+    const badgeContainer = document.getElementById('selectedSeatsBadges');
+    document.getElementById('selected-count-label').innerText = selectedSeats.size;
+    document.getElementById('selected-summary-label').innerText = `${selectedSeats.size} Kursi Terpilih`;
+    document.getElementById('mob-sel-cnt').innerText = selectedSeats.size;
+
+    if (selectedSeats.size === 0) {
+      badgeContainer.innerHTML = '<span style="color:#666; font-size:11px; align-self:center;">Klik kursi pada denah</span>';
+      document.getElementById('floatingBar').classList.remove('show');
+    } else {
+      const sortedSeats = Array.from(selectedSeats).sort();
+      badgeContainer.innerHTML = sortedSeats.map(s => `
+        <span class="seat-badge">
+          ${s}
+          <span class="del-btn" onclick="event.stopPropagation(); toggleSeat('${s}')">&times;</span>
+        </span>
+      `).join('');
+      
+      document.getElementById('float-count').innerText = selectedSeats.size;
+      document.getElementById('floatingBar').classList.add('show');
+    }
+
+    renderReservationsTable();
+  }
+
+  function renderReservationsTable() {
+    const tbody = document.getElementById('bookingsTableBody');
+    const search = (document.getElementById('searchBookings').value || '').toLowerCase().trim();
+
+    let list = ALL_SEATS
+      .map(id => seatsState[id])
+      .filter(item => item && (item.status === 'reserved' || item.status === 'blocked'));
+
+    if (search) {
+      list = list.filter(item => 
+        item.id.toLowerCase().includes(search) || 
+        (item.guestName && item.guestName.toLowerCase().includes(search)) ||
+        (item.phone && item.phone.toLowerCase().includes(search))
+      );
+    }
+
+    if (list.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; padding:10px;">Tidak ada reservasi yang sesuai.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = list.map(item => `
+      <tr>
+        <td><strong>${item.id}</strong></td>
+        <td>${item.guestName || '-'}</td>
+        <td>${item.pax || 1}</td>
+        <td>
+          <span style="color: ${item.status === 'reserved' ? '#ef4444' : '#888'}; font-weight:600;">
+            ${item.status.toUpperCase()}
+          </span>
+        </td>
+        <td>
+          <button style="background:none; border:none; color:#ef4444; cursor:pointer; font-weight:bold; font-size:12px;" onclick="releaseSingleSeat('${item.id}')" title="Release seat">✖</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function switchMobileTab(tabContentId, btnEl) {
+    document.querySelectorAll('.mobile-tab-nav .tab-btn').forEach(b => b.classList.remove('active'));
+    btnEl.classList.add('active');
+
+    document.querySelectorAll('.sidebar, .viewport-center').forEach(el => {
+      el.classList.remove('active-tab-content');
+    });
+
+    const target = document.getElementById(tabContentId);
+    if (target) {
+      target.classList.add('active-tab-content');
+    }
+  }
+
+  function focusReservationForm() {
+    if (window.innerWidth <= 900) {
+      const formTabBtn = document.querySelectorAll('.mobile-tab-nav .tab-btn')[1];
+      switchMobileTab('sidebar-right', formTabBtn);
+    }
+    document.getElementById('guestName').focus();
+  }
+
+  function zoom(factor) {
+    currentZoom *= factor;
+    currentZoom = Math.min(Math.max(0.55, currentZoom), 2.5);
+    document.getElementById('floorplan-wrapper').style.transform = `scale(${currentZoom})`;
+  }
+
+  function resetZoom() {
+    currentZoom = 1;
+    document.getElementById('floorplan-wrapper').style.transform = `scale(1)`;
+  }
+
+  function setupPanAndDrag() {
+    const container = document.getElementById('panZoomContainer');
+    
+    container.addEventListener('mousedown', (e) => {
+      if (e.target.closest('.interactive-seat')) return;
+      isDragging = true;
+      startX = e.pageX - container.offsetLeft;
+      startY = e.pageY - container.offsetTop;
+      scrollLeft = container.scrollLeft;
+      scrollTop = container.scrollTop;
+    });
+
+    container.addEventListener('mouseleave', () => isDragging = false);
+    container.addEventListener('mouseup', () => isDragging = false);
+
+    container.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      const x = e.pageX - container.offsetLeft;
+      const y = e.pageY - container.offsetTop;
+      const walkX = (x - startX) * 1.4;
+      const walkY = (y - startY) * 1.4;
+      container.scrollLeft = scrollLeft - walkX;
+      container.scrollTop = scrollTop - walkY;
+    });
+
+    container.addEventListener('wheel', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        zoom(e.deltaY < 0 ? 1.1 : 0.9);
+      }
+    }, { passive: false });
+  }
+
+  function setupTooltips() {
+    const tooltip = document.getElementById('seatTooltip');
+    ALL_SEATS.forEach(seatId => {
+      const el = document.getElementById(`seat-${seatId}`);
+      if (!el) return;
+
+      el.addEventListener('mouseenter', (e) => {
+        const item = seatsState[seatId];
+        const isSel = selectedSeats.has(seatId);
+        let html = `<strong>Kursi ${seatId}</strong> (Row ${item.row})<br/>`;
+        html += `Status: <span style="color:${isSel ? '#eab308' : (item.status === 'reserved' ? '#ef4444' : (item.status === 'available' ? '#22c55e' : '#888'))}; font-weight:bold;">${isSel ? 'SELECTED' : item.status.toUpperCase()}</span>`;
+        if (item.status === 'reserved' && item.guestName) {
+          html += `<br/>Guest: ${item.guestName} (${item.pax} Pax)`;
+        }
+        tooltip.innerHTML = html;
+        tooltip.style.display = 'block';
+      });
+
+      el.addEventListener('mousemove', (e) => {
+        tooltip.style.left = (e.clientX + 14) + 'px';
+        tooltip.style.top = (e.clientY + 14) + 'px';
+      });
+
+      el.addEventListener('mouseleave', () => {
+        tooltip.style.display = 'none';
+      });
+    });
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.innerText = msg;
+    toast.style.display = 'block';
+    setTimeout(() => {
+      toast.style.display = 'none';
+    }, 2600);
+  }
+
+  function resetAllData() {
+    if (confirm('Reset seluruh data reservasi kembali ke kondisi awal (76 Kursi Available)?')) {
+      localStorage.removeItem('the_music_place_seating_76');
+      selectedSeats.clear();
+      initDefaultSeats();
+      updateUI();
+      showToast('Semua reservasi berhasil di-reset.');
+    }
+  }
+
+  function exportDataJSON() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(seatsState, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", `TheMusicPlace_76Seat_${new Date().toISOString().slice(0,10)}.json`);
+    dlAnchor.click();
+    showToast('Data reservasi berhasil di-export!');
+  }
+
+  function importDataJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (typeof imported === 'object') {
+          seatsState = imported;
+          saveToStorage();
+          selectedSeats.clear();
+          updateUI();
+          showToast('Data berhasil di-import dari JSON!');
+        }
+      } catch(err) {
+        alert('File JSON tidak valid.');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
