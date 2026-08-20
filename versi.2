@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Music Place - Seating & Reservation System (76 Seats)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f0d0b;
+            color: #f5f0eb;
+        }
+
+        .brand-font {
+            font-family: 'Cinzel', serif;
+        }
+
+        /* Styling Seat SVG */
+        .seat {
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-origin: center;
+        }
+        .seat:hover {
+            filter: drop-shadow(0 0 6px rgba(212, 175, 55, 0.9));
+            transform: scale(1.08);
+        }
+        .seat.available {
+            fill: #dfd3c3;
+            stroke: #8d6e63;
+            stroke-width: 1.5;
+        }
+        .seat.selected {
+            fill: #3b82f6 !important;
+            stroke: #1d4ed8 !important;
+            filter: drop-shadow(0 0 8px #60a5fa);
+        }
+        .seat.reserved {
+            fill: #b91c1c !important;
+            stroke: #7f1d1d !important;
+        }
+        .seat.blocked {
+            fill: #4b5563 !important;
+            stroke: #1f2937 !important;
+            cursor: not-allowed;
+        }
+
+        .seat-text {
+            font-size: 8.5px;
+            font-weight: 700;
+            fill: #2c1810;
+            user-select: none;
+            pointer-events: none;
+        }
+        .seat.selected + .seat-text,
+        .seat.reserved + .seat-text,
+        .seat.blocked + .seat-text {
+            fill: #ffffff;
+        }
+
+        /* Denah styling */
+        .floor-wall {
+            stroke: #d4af37;
+            stroke-width: 2.5;
+            fill: none;
+        }
+        .room-zone {
+            fill: #1a1614;
+            stroke: #4a3b32;
+            stroke-width: 1.5;
+        }
+        .table-shape {
+            fill: #3e2723;
+            stroke: #8d6e63;
+            stroke-width: 1.5;
+            rx: 4px;
+        }
+        .sofa-shape {
+            fill: #2e1c14;
+            stroke: #bcaaa4;
+            stroke-width: 1.5;
+            rx: 6px;
+        }
+
+        /* Scrollbar kustom */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #181412;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4a3b32;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d4af37;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white;
+                color: black;
+            }
+            .print-full {
+                width: 100% !important;
+                height: auto !important;
+            }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden select-none">
+
+    <!-- Top Bar -->
+    <header class="bg-[#181412] border-b border-[#3a2e26] px-6 py-3 flex items-center justify-between no-print z-10 shadow-lg">
+        <div class="flex items-center space-x-4">
+            <div class="w-10 h-10 rounded-full border border-[#d4af37] flex items-center justify-center bg-[#251d18]">
+                <span class="brand-font text-[#d4af37] font-bold text-lg">MP</span>
+            </div>
+            <div>
+                <h1 class="brand-font text-lg font-bold tracking-wider text-[#e6c687]">THE MUSIC PLACE</h1>
+                <p class="text-xs text-[#a89f91] tracking-widest">AT FAIRMONT JAKARTA &bull; SEATING & RESERVATION</p>
+            </div>
+        </div>
+
+        <!-- Quick Metrics -->
+        <div class="flex items-center space-x-6 text-sm bg-[#120f0d] px-4 py-1.5 rounded-lg border border-[#2b221c]">
+            <div class="text-center">
+                <span class="block text-[10px] text-gray-400 font-semibold uppercase">Total Seat</span>
+                <span class="font-bold text-gray-200">76</span>
+            </div>
+            <div class="h-6 w-px bg-[#3a2e26]"></div>
+            <div class="text-center">
+                <span class="block text-[10px] text-emerald-400 font-semibold uppercase">Available</span>
+                <span class="font-bold text-emerald-400" id="stat-available">76</span>
+            </div>
+            <div class="h-6 w-px bg-[#3a2e26]"></div>
+            <div class="text-center">
+                <span class="block text-[10px] text-blue-400 font-semibold uppercase">Selected</span>
+                <span class="font-bold text-blue-400" id="stat-selected">0</span>
+            </div>
+            <div class="h-6 w-px bg-[#3a2e26]"></div>
+            <div class="text-center">
+                <span class="block text-[10px] text-red-400 font-semibold uppercase">Reserved</span>
+                <span class="font-bold text-red-400" id="stat-reserved">0</span>
+            </div>
+            <div class="h-6 w-px bg-[#3a2e26]"></div>
+            <div class="text-center">
+                <span class="block text-[10px] text-[#d4af37] font-semibold uppercase">Occupancy</span>
+                <span class="font-bold text-[#d4af37]" id="stat-occupancy">0%</span>
+            </div>
+        </div>
+
+        <!-- Toolbar Buttons -->
+        <div class="flex items-center space-x-2">
+            <button onclick="zoom(0.1)" class="p-2 bg-[#251d18] hover:bg-[#382b24] text-gray-300 rounded border border-[#3e3128] transition" title="Zoom In">
+                <i class="fa-solid fa-magnifying-glass-plus"></i>
+            </button>
+            <button onclick="zoom(-0.1)" class="p-2 bg-[#251d18] hover:bg-[#382b24] text-gray-300 rounded border border-[#3e3128] transition" title="Zoom Out">
+                <i class="fa-solid fa-magnifying-glass-minus"></i>
+            </button>
+            <button onclick="resetZoom()" class="p-2 bg-[#251d18] hover:bg-[#382b24] text-gray-300 rounded border border-[#3e3128] transition" title="Reset View">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+            <div class="h-6 w-px bg-[#3a2e26] mx-1"></div>
+            <button onclick="exportData()" class="px-3 py-1.5 bg-[#251d18] hover:bg-[#382b24] text-xs text-[#e6c687] rounded border border-[#d4af37]/40 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-download"></i> JSON
+            </button>
+            <label class="px-3 py-1.5 bg-[#251d18] hover:bg-[#382b24] text-xs text-[#e6c687] rounded border border-[#d4af37]/40 flex items-center gap-1.5 cursor-pointer transition">
+                <i class="fa-solid fa-upload"></i> Import
+                <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
+            </label>
+            <button onclick="window.print()" class="px-3 py-1.5 bg-[#d4af37] hover:bg-[#c39e2e] text-xs text-black font-semibold rounded flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-print"></i> PDF/Print
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-1 flex overflow-hidden">
+
+        <!-- Left Controls & Selection Filter -->
+        <aside class="w-64 bg-[#14100e] border-r border-[#2d231d] p-4 flex flex-col justify-between no-print overflow-y-auto">
+            <div class="space-y-4">
+                <div>
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Filter Group Row</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="selectRow('A')" class="py-1.5 px-2 bg-[#201814] hover:bg-[#33251f] text-xs font-semibold rounded border border-[#3d2e26] text-[#e6c687] flex justify-between items-center transition">
+                            <span>Row A</span> <span class="text-[10px] text-gray-400">26 seat</span>
+                        </button>
+                        <button onclick="selectRow('B')" class="py-1.5 px-2 bg-[#201814] hover:bg-[#33251f] text-xs font-semibold rounded border border-[#3d2e26] text-[#e6c687] flex justify-between items-center transition">
+                            <span>Row B</span> <span class="text-[10px] text-gray-400">24 seat</span>
+                        </button>
+                        <button onclick="selectRow('C')" class="py-1.5 px-2 bg-[#201814] hover:bg-[#33251f] text-xs font-semibold rounded border border-[#3d2e26] text-[#e6c687] flex justify-between items-center transition">
+                            <span>Row C</span> <span class="text-[10px] text-gray-400">20 seat</span>
+                        </button>
+                        <button onclick="selectRow('D')" class="py-1.5 px-2 bg-[#201814] hover:bg-[#33251f] text-xs font-semibold rounded border border-[#3d2e26] text-[#e6c687] flex justify-between items-center transition">
+                            <span>Row D/VIP</span> <span class="text-[10px] text-gray-400">6 seat</span>
+                        </button>
+                    </div>
+                    <div class="mt-2 flex gap-2">
+                        <button onclick="selectAll()" class="flex-1 py-1 bg-[#1e1713] hover:bg-[#2b201a] text-[11px] text-gray-300 rounded border border-[#33251e]">Select All</button>
+                        <button onclick="clearSelection()" class="flex-1 py-1 bg-[#1e1713] hover:bg-[#2b201a] text-[11px] text-gray-300 rounded border border-[#33251e]">Clear</button>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-[#2d231d]">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Status Legend</span>
+                    <div class="space-y-1.5 text-xs">
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded bg-[#dfd3c3] border border-[#8d6e63]"></div>
+                            <span class="text-gray-300">Available (Tersedia)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded bg-[#3b82f6] border border-[#1d4ed8]"></div>
+                            <span class="text-gray-300">Selected (Dipilih)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded bg-[#b91c1c] border border-[#7f1d1d]"></div>
+                            <span class="text-gray-300">Reserved (Terisi)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="w-4 h-4 rounded bg-[#4b5563] border border-[#1f2937]"></div>
+                            <span class="text-gray-300">Blocked (Nonaktif)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 border-t border-[#2d231d]">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Dimensi Stage & Hall</span>
+                    <div class="text-[11px] text-gray-400 space-y-1 bg-[#1a1411] p-2.5 rounded border border-[#2b211a]">
+                        <p><strong class="text-gray-200">Stage:</strong> 4.00 m × 9.20 m (36.8 m²)</p>
+                        <p><strong class="text-gray-200">LED Frame:</strong> 4.00 m × 9.00 m</p>
+                        <p><strong class="text-gray-200">Dance Floor:</strong> 3.00 m × 8.00 m (24.0 m²)</p>
+                        <p><strong class="text-gray-200">Building Width:</strong> ±25.49 m Segment</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-[#2d231d] text-center">
+                <button onclick="resetAllReservations()" class="w-full py-2 bg-red-950/40 hover:bg-red-900/60 border border-red-800/50 text-red-300 text-xs font-semibold rounded transition">
+                    <i class="fa-solid fa-trash-can mr-1"></i> Reset Semua Reservasi
+                </button>
+            </div>
+        </aside>
+
+        <!-- Center Interactive Layout SVG Viewport -->
+        <main class="flex-1 bg-[#0d0a08] relative overflow-hidden flex items-center justify-center p-2">
+            <div id="svgContainer" class="w-full h-full flex items-center justify-center transition-transform duration-100 ease-out cursor-grab active:cursor-grabbing">
+                <!-- SVG Canvas Mengikuti Gambar Denah 76.png -->
+                <svg id="venueFloorplan" viewBox="0 0 1300 840" class="w-full h-full max-h-[92vh] drop-shadow-2xl">
+                    <defs>
+                        <!-- Grid pattern -->
+                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#221b16" stroke-width="0.75"/>
+                        </pattern>
+                        <!-- Stage Wood Finish -->
+                        <linearGradient id="stageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#3c2415" />
+                            <stop offset="100%" stop-color="#23140b" />
+                        </linearGradient>
+                        <!-- Dance floor finish -->
+                        <linearGradient id="danceGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#2a221b" />
+                            <stop offset="100%" stop-color="#15100c" />
+                        </linearGradient>
+                        <!-- Seat template -->
+                        <g id="chair-def">
+                            <rect x="-13" y="-13" width="26" height="26" rx="6" />
+                            <path d="M -11 -8 Q 0 -14 11 -8" fill="none" stroke="#6d4c41" stroke-width="1.5" />
+                        </g>
+                    </defs>
+
+                    <!-- Background & Wall Outline -->
+                    <rect x="10" y="10" width="1280" height="820" fill="url(#grid)" />
+                    <rect x="40" y="40" width="1220" height="740" fill="#14100e" stroke="#6f5539" stroke-width="3" />
+
+                    <!-- Top Structure / Outer Wall Details -->
+                    <path d="M 40 40 L 1260 40" stroke="#a47e43" stroke-width="4"/>
+                    <!-- Pillars Top -->
+                    <rect x="140" y="25" width="45" height="15" fill="#3a2e26" stroke="#a47e43"/>
+                    <rect x="430" y="25" width="45" height="15" fill="#3a2e26" stroke="#a47e43"/>
+                    <rect x="740" y="25" width="45" height="15" fill="#3a2e26" stroke="#a47e43"/>
+                    <rect x="1030" y="25" width="45" height="15" fill="#3a2e26" stroke="#a47e43"/>
+
+                    <!-- ROOMS & FACILITIES (Left Side) -->
+                    <!-- Preparation Area -->
+                    <g class="room-zone">
+                        <rect x="40" y="40" width="70" height="40" />
+                        <text x="75" y="64" fill="#a89f91" font-size="8" font-weight="bold" text-anchor="middle">PREPARATION</text>
+                    </g>
+                    <!-- Buffet Area -->
+                    <g class="room-zone">
+                        <rect x="110" y="40" width="240" height="40" />
+                        <text x="230" y="64" fill="#e6c687" font-size="11" font-weight="bold" text-anchor="middle">BUFFET AREA</text>
+                    </g>
+                    <!-- Left Kitchen -->
+                    <g class="room-zone">
+                        <path d="M 40 140 L 120 140 L 120 540 L 40 540 Z" />
+                        <text x="80" y="340" fill="#a89f91" font-size="12" font-weight="bold" text-anchor="middle" transform="rotate(-90 80 340)">KITCHEN</text>
+                    </g>
+                    <!-- Bar Area -->
+                    <g class="room-zone">
+                        <path d="M 120 540 L 220 540 L 220 660 L 120 660 Z" />
+                        <path d="M 155 560 L 205 560 L 205 645 L 175 645 L 175 585 L 155 585 Z" fill="#422e22" stroke="#8d6e63" stroke-width="1.5"/>
+                        <text x="170" y="615" fill="#e6c687" font-size="11" font-weight="bold" text-anchor="middle">BAR</text>
+                    </g>
+                    <!-- Kitchen Bottom -->
+                    <g class="room-zone">
+                        <rect x="40" y="660" width="220" height="120" />
+                        <text x="150" y="725" fill="#a89f91" font-size="12" font-weight="bold" text-anchor="middle">KITCHEN</text>
+                    </g>
+
+                    <!-- TO FOH & Stairs -->
+                    <g class="room-zone">
+                        <rect x="320" y="660" width="110" height="120" />
+                        <!-- Stair graphic lines -->
+                        <line x1="320" y1="660" x2="430" y2="780" stroke="#4a3b32" stroke-width="1.5" />
+                        <line x1="320" y1="780" x2="430" y2="660" stroke="#4a3b32" stroke-width="1.5" />
+                        <rect x="345" y="700" width="60" height="40" fill="#14100e" stroke="#6f5539"/>
+                        <text x="375" y="724" fill="#d4af37" font-size="10" font-weight="bold" text-anchor="middle">TO FOH</text>
+                    </g>
+
+                    <!-- CENTER AREA: LED, STAGE, DANCE FLOOR -->
+                    <!-- LED Frame -->
+                    <rect x="420" y="40" width="380" height="20" fill="#1e1b18" stroke="#d4af37" stroke-width="1.5"/>
+                    <text x="610" y="54" fill="#d4af37" font-size="9" font-weight="bold" text-anchor="middle" letter-spacing="4">L E D   F R A M E</text>
+
+                    <!-- Stage -->
+                    <path d="M 420 60 L 800 60 L 800 150 L 780 150 L 780 185 L 815 185 L 815 220 L 405 220 L 405 185 L 440 185 L 440 150 L 420 150 Z" 
+                          fill="url(#stageGrad)" stroke="#a47e43" stroke-width="2" />
+                    <text x="610" y="135" fill="#f5e6cc" font-size="15" font-weight="bold" text-anchor="middle" letter-spacing="6">S T A G E</text>
+                    <text x="610" y="155" fill="#bfa588" font-size="10" text-anchor="middle">4M × 9.2M (36.8 m²)</text>
+                    <text x="610" y="170" fill="#8c765c" font-size="9" text-anchor="middle">Height: 50 cm</text>
+
+                    <!-- Dance Floor -->
+                    <rect x="435" y="235" width="350" height="135" fill="url(#danceGrad)" stroke="#6f5539" stroke-width="1.5" stroke-dasharray="6,4"/>
+                    <!-- Grid tile on dancefloor -->
+                    <line x1="435" y1="280" x2="785" y2="280" stroke="#33251d" stroke-width="1"/>
+                    <line x1="435" y1="325" x2="785" y2="325" stroke="#33251d" stroke-width="1"/>
+                    <line x1="522" y1="235" x2="522" y2="370" stroke="#33251d" stroke-width="1"/>
+                    <line x1="610" y1="235" x2="610" y2="370" stroke="#33251d" stroke-width="1"/>
+                    <line x1="697" y1="235" x2="697" y2="370" stroke="#33251d" stroke-width="1"/>
+                    <text x="610" y="295" fill="#d4af37" font-size="12" font-weight="bold" text-anchor="middle" letter-spacing="3">DANCE FLOOR</text>
+                    <text x="610" y="315" fill="#8c765c" font-size="9" text-anchor="middle">3M × 8M (24 m²)</text>
+
+                    <!-- RIGHT FACILITIES & LOUNGE -->
+                    <!-- Private Room -->
+                    <g class="room-zone">
+                        <rect x="1050" y="140" width="150" height="340" />
+                        <text x="1125" y="310" fill="#a89f91" font-size="13" font-weight="bold" text-anchor="middle">Private Room</text>
+                    </g>
+                    <!-- Reception, Storage, Toilet, Janitor -->
+                    <g class="room-zone">
+                        <rect x="715" y="660" width="70" height="120" />
+                        <text x="750" y="725" fill="#a89f91" font-size="9" font-weight="bold" text-anchor="middle">STORAGE</text>
+                    </g>
+                    <g class="room-zone">
+                        <rect x="945" y="620" width="110" height="60" />
+                        <text x="1000" y="655" fill="#e6c687" font-size="10" font-weight="bold" text-anchor="middle">RECEPTION</text>
+                    </g>
+                    <g class="room-zone">
+                        <rect x="1070" y="620" width="45" height="60" />
+                        <text x="1092" y="655" fill="#a89f91" font-size="8" font-weight="bold" text-anchor="middle">JANITOR</text>
+                    </g>
+                    <g class="room-zone">
+                        <rect x="1145" y="620" width="115" height="160" />
+                        <text x="1200" y="700" fill="#a89f91" font-size="11" font-weight="bold" text-anchor="middle">TOILET</text>
+                    </g>
+
+                    <!-- Long Sofas & Non-reservable lounge seats -->
+                    <!-- Top right sofa -->
+                    <rect x="850" y="45" width="55" height="25" class="sofa-shape" />
+                    <text x="877" y="61" fill="#8c765c" font-size="7" text-anchor="middle">Sofa</text>
+                    <rect x="915" y="45" width="85" height="25" class="sofa-shape" />
+                    <text x="957" y="61" fill="#8c765c" font-size="7" text-anchor="middle">Long Sofa</text>
+                    <!-- Middle right sofa -->
+                    <rect x="920" y="570" width="105" height="26" class="sofa-shape" />
+                    <text x="972" y="586" fill="#8c765c" font-size="7" text-anchor="middle">Long Sofa</text>
+                    <!-- Bottom sliding door & sofa -->
+                    <rect x="820" y="755" width="95" height="25" class="sofa-shape" />
+                    <text x="867" y="771" fill="#8c765c" font-size="7" text-anchor="middle">Long Sofa</text>
+                    <rect x="955" y="760" width="100" height="20" fill="none" stroke="#6f5539" stroke-dasharray="4,2"/>
+                    <text x="1005" y="773" fill="#a89f91" font-size="7" text-anchor="middle">AUTO GLASS DOOR</text>
+                    <rect x="1070" y="755" width="100" height="25" class="sofa-shape" />
+                    <text x="1120" y="771" fill="#8c765c" font-size="7" text-anchor="middle">Long Sofa</text>
+
+                    <!-- SEATING TABLES AND CHAIRS -->
+
+                    <!-- ================= ROW A (LEFT WING) ================= -->
+                    <text x="245" y="240" fill="#e6c687" font-size="11" font-weight="bold" letter-spacing="2">A ROW</text>
+                    
+                    <!-- Table A Left Top (A21 - A26) - 6 Pax -->
+                    <g id="table-A-LT">
+                        <rect x="155" y="270" width="85" height="48" class="table-shape"/>
+                        <text x="197" y="298" fill="#dfd3c3" font-size="9" text-anchor="middle">6 Pax</text>
+                        <!-- Top Seats -->
+                        <g transform="translate(170, 255)"><rect class="seat available" id="seat-A26" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A26')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A26</text></g>
+                        <g transform="translate(197, 255)"><rect class="seat available" id="seat-A24" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A24')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A24</text></g>
+                        <g transform="translate(225, 255)"><rect class="seat available" id="seat-A22" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A22')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A22</text></g>
+                        <!-- Bottom Seats -->
+                        <g transform="translate(170, 332)"><rect class="seat available" id="seat-A25" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A25')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A25</text></g>
+                        <g transform="translate(197, 332)"><rect class="seat available" id="seat-A23" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A23')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A23</text></g>
+                        <g transform="translate(225, 332)"><rect class="seat available" id="seat-A21" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A21')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A21</text></g>
+                    </g>
+
+                    <!-- Table A Right Top (A15 - A20) - 6 Pax -->
+                    <g id="table-A-RT">
+                        <rect x="265" y="270" width="85" height="48" class="table-shape"/>
+                        <text x="307" y="298" fill="#dfd3c3" font-size="9" text-anchor="middle">6 Pax</text>
+                        <!-- Top Seats -->
+                        <g transform="translate(280, 255)"><rect class="seat available" id="seat-A20" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A20')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A20</text></g>
+                        <g transform="translate(307, 255)"><rect class="seat available" id="seat-A18" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A18')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A18</text></g>
+                        <g transform="translate(335, 255)"><rect class="seat available" id="seat-A16" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A16')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A16</text></g>
+                        <!-- Bottom Seats -->
+                        <g transform="translate(280, 332)"><rect class="seat available" id="seat-A19" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A19')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A19</text></g>
+                        <g transform="translate(307, 332)"><rect class="seat available" id="seat-A17" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A17')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A17</text></g>
+                        <g transform="translate(335, 332)"><rect class="seat available" id="seat-A15" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A15')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A15</text></g>
+                    </g>
+
+                    <!-- Table A Left Bottom (A9 - A14) - 6 Pax -->
+                    <g id="table-A-LB">
+                        <rect x="155" y="385" width="85" height="48" class="table-shape"/>
+                        <text x="197" y="413" fill="#dfd3c3" font-size="9" text-anchor="middle">6 Pax</text>
+                        <!-- Top Seats -->
+                        <g transform="translate(170, 370)"><rect class="seat available" id="seat-A14" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A14')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A14</text></g>
+                        <g transform="translate(197, 370)"><rect class="seat available" id="seat-A12" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A12')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A12</text></g>
+                        <g transform="translate(225, 370)"><rect class="seat available" id="seat-A10" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A10')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A10</text></g>
+                        <!-- Bottom Seats -->
+                        <g transform="translate(170, 447)"><rect class="seat available" id="seat-A13" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A13')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A13</text></g>
+                        <g transform="translate(197, 447)"><rect class="seat available" id="seat-A11" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A11')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A11</text></g>
+                        <g transform="translate(225, 447)"><rect class="seat available" id="seat-A9" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A9')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A9</text></g>
+                    </g>
+
+                    <!-- Table A Right Bottom (A1 - A8) - 8 Pax -->
+                    <g id="table-A-RB">
+                        <rect x="265" y="385" width="112" height="48" class="table-shape"/>
+                        <text x="321" y="413" fill="#dfd3c3" font-size="9" text-anchor="middle">8 Pax</text>
+                        <!-- Top Seats -->
+                        <g transform="translate(280, 370)"><rect class="seat available" id="seat-A8" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A8')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A8</text></g>
+                        <g transform="translate(307, 370)"><rect class="seat available" id="seat-A6" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A6')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A6</text></g>
+                        <g transform="translate(335, 370)"><rect class="seat available" id="seat-A4" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A4')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A4</text></g>
+                        <g transform="translate(362, 370)"><rect class="seat available" id="seat-A2" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A2')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A2</text></g>
+                        <!-- Bottom Seats -->
+                        <g transform="translate(280, 447)"><rect class="seat available" id="seat-A7" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A7')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A7</text></g>
+                        <g transform="translate(307, 447)"><rect class="seat available" id="seat-A5" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A5')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A5</text></g>
+                        <g transform="translate(335, 447)"><rect class="seat available" id="seat-A3" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A3')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A3</text></g>
+                        <g transform="translate(362, 447)"><rect class="seat available" id="seat-A1" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('A1')"/><text class="seat-text" x="0" y="3" text-anchor="middle">A1</text></g>
+                    </g>
+
+
+                    <!-- ================= ROW B (CENTER / LOWER DANCE FLOOR) ================= -->
+                    <text x="590" y="450" fill="#e6c687" font-size="11" font-weight="bold" letter-spacing="2">B ROW</text>
+
+                    <!-- Table B Left (B17-B24) - 8 Pax -->
+                    <g id="table-B-L">
+                        <rect x="460" y="470" width="50" height="110" class="table-shape"/>
+                        <text x="485" y="530" fill="#dfd3c3" font-size="8" text-anchor="middle" transform="rotate(-90 485 530)">8 Pax</text>
+                        <!-- Left col -->
+                        <g transform="translate(442, 485)"><rect class="seat available" id="seat-B17" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B17')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B17</text></g>
+                        <g transform="translate(442, 515)"><rect class="seat available" id="seat-B19" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B19')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B19</text></g>
+                        <g transform="translate(442, 545)"><rect class="seat available" id="seat-B21" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B21')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B21</text></g>
+                        <g transform="translate(442, 575)"><rect class="seat available" id="seat-B23" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B23')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B23</text></g>
+                        <!-- Right col -->
+                        <g transform="translate(528, 485)"><rect class="seat available" id="seat-B18" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B18')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B18</text></g>
+                        <g transform="translate(528, 515)"><rect class="seat available" id="seat-B20" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B20')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B20</text></g>
+                        <g transform="translate(528, 545)"><rect class="seat available" id="seat-B22" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B22')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B22</text></g>
+                        <g transform="translate(528, 575)"><rect class="seat available" id="seat-B24" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B24')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B24</text></g>
+                    </g>
+
+                    <!-- Table B Center (B1-B8) - 8 Pax -->
+                    <g id="table-B-C">
+                        <rect x="585" y="470" width="50" height="110" class="table-shape"/>
+                        <text x="610" y="530" fill="#dfd3c3" font-size="8" text-anchor="middle" transform="rotate(-90 610 530)">8 Pax</text>
+                        <!-- Left col -->
+                        <g transform="translate(567, 485)"><rect class="seat available" id="seat-B1" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B1')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B1</text></g>
+                        <g transform="translate(567, 515)"><rect class="seat available" id="seat-B3" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B3')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B3</text></g>
+                        <g transform="translate(567, 545)"><rect class="seat available" id="seat-B5" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B5')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B5</text></g>
+                        <g transform="translate(567, 575)"><rect class="seat available" id="seat-B7" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B7')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B7</text></g>
+                        <!-- Right col -->
+                        <g transform="translate(653, 485)"><rect class="seat available" id="seat-B2" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B2')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B2</text></g>
+                        <g transform="translate(653, 515)"><rect class="seat available" id="seat-B4" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B4')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B4</text></g>
+                        <g transform="translate(653, 545)"><rect class="seat available" id="seat-B6" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B6')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B6</text></g>
+                        <g transform="translate(653, 575)"><rect class="seat available" id="seat-B8" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B8')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B8</text></g>
+                    </g>
+
+                    <!-- Table B Right (B9-B16) - 8 Pax -->
+                    <g id="table-B-R">
+                        <rect x="710" y="470" width="50" height="110" class="table-shape"/>
+                        <text x="735" y="530" fill="#dfd3c3" font-size="8" text-anchor="middle" transform="rotate(-90 735 530)">8 Pax</text>
+                        <!-- Left col -->
+                        <g transform="translate(692, 485)"><rect class="seat available" id="seat-B9" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B9')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B9</text></g>
+                        <g transform="translate(692, 515)"><rect class="seat available" id="seat-B11" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B11')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B11</text></g>
+                        <g transform="translate(692, 545)"><rect class="seat available" id="seat-B13" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B13')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B13</text></g>
+                        <g transform="translate(692, 575)"><rect class="seat available" id="seat-B15" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B15')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B15</text></g>
+                        <!-- Right col -->
+                        <g transform="translate(778, 485)"><rect class="seat available" id="seat-B10" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B10')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B10</text></g>
+                        <g transform="translate(778, 515)"><rect class="seat available" id="seat-B12" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B12')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B12</text></g>
+                        <g transform="translate(778, 545)"><rect class="seat available" id="seat-B14" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B14')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B14</text></g>
+                        <g transform="translate(778, 575)"><rect class="seat available" id="seat-B16" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('B16')"/><text class="seat-text" x="0" y="3" text-anchor="middle">B16</text></g>
+                    </g>
+
+
+                    <!-- ================= ROW C (RIGHT WING) ================= -->
+                    <text x="965" y="240" fill="#e6c687" font-size="11" font-weight="bold" letter-spacing="2">C ROW</text>
+
+                    <!-- Table C Top (C11 - C20) - 10 Pax -->
+                    <g id="table-C-T">
+                        <rect x="890" y="270" width="145" height="48" class="table-shape"/>
+                        <text x="962" y="298" fill="#dfd3c3" font-size="9" text-anchor="middle">10 Pax</text>
+                        <!-- Top row -->
+                        <g transform="translate(905, 255)"><rect class="seat available" id="seat-C12" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C12')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C12</text></g>
+                        <g transform="translate(933, 255)"><rect class="seat available" id="seat-C14" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C14')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C14</text></g>
+                        <g transform="translate(962, 255)"><rect class="seat available" id="seat-C16" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C16')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C16</text></g>
+                        <g transform="translate(991, 255)"><rect class="seat available" id="seat-C18" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C18')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C18</text></g>
+                        <g transform="translate(1020, 255)"><rect class="seat available" id="seat-C20" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C20')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C20</text></g>
+                        <!-- Bottom row -->
+                        <g transform="translate(905, 332)"><rect class="seat available" id="seat-C11" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C11')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C11</text></g>
+                        <g transform="translate(933, 332)"><rect class="seat available" id="seat-C13" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C13')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C13</text></g>
+                        <g transform="translate(962, 332)"><rect class="seat available" id="seat-C15" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C15')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C15</text></g>
+                        <g transform="translate(991, 332)"><rect class="seat available" id="seat-C17" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C17')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C17</text></g>
+                        <g transform="translate(1020, 332)"><rect class="seat available" id="seat-C19" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C19')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C19</text></g>
+                    </g>
+
+                    <!-- Table C Bottom (C1 - C10) - 10 Pax -->
+                    <g id="table-C-B">
+                        <rect x="890" y="385" width="145" height="48" class="table-shape"/>
+                        <text x="962" y="413" fill="#dfd3c3" font-size="9" text-anchor="middle">10 Pax</text>
+                        <!-- Top row -->
+                        <g transform="translate(905, 370)"><rect class="seat available" id="seat-C2" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C2')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C2</text></g>
+                        <g transform="translate(933, 370)"><rect class="seat available" id="seat-C4" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C4')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C4</text></g>
+                        <g transform="translate(962, 370)"><rect class="seat available" id="seat-C6" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C6')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C6</text></g>
+                        <g transform="translate(991, 370)"><rect class="seat available" id="seat-C8" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C8')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C8</text></g>
+                        <g transform="translate(1020, 370)"><rect class="seat available" id="seat-C10" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C10')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C10</text></g>
+                        <!-- Bottom row -->
+                        <g transform="translate(905, 447)"><rect class="seat available" id="seat-C1" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C1')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C1</text></g>
+                        <g transform="translate(933, 447)"><rect class="seat available" id="seat-C3" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C3')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C3</text></g>
+                        <g transform="translate(962, 447)"><rect class="seat available" id="seat-C5" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C5')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C5</text></g>
+                        <g transform="translate(991, 447)"><rect class="seat available" id="seat-C7" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C7')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C7</text></g>
+                        <g transform="translate(1020, 447)"><rect class="seat available" id="seat-C9" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('C9')"/><text class="seat-text" x="0" y="3" text-anchor="middle">C9</text></g>
+                    </g>
+
+
+                    <!-- ================= ROW D / VIP SOFA (BOTTOM CENTER) ================= -->
+                    <text x="580" y="640" fill="#e6c687" font-size="11" font-weight="bold" letter-spacing="2">D ROW / VIP</text>
+
+                    <!-- Table D (D5-D6, D1-D2, D3-D4) -->
+                    <g id="table-D-VIP">
+                        <!-- 3 Tables -->
+                        <rect x="475" y="660" width="55" height="32" class="table-shape"/>
+                        <text x="502" y="680" fill="#dfd3c3" font-size="8" text-anchor="middle">2 Pax</text>
+
+                        <rect x="555" y="660" width="55" height="32" class="table-shape"/>
+                        <text x="582" y="680" fill="#dfd3c3" font-size="8" text-anchor="middle">2 Pax</text>
+
+                        <rect x="635" y="660" width="55" height="32" class="table-shape"/>
+                        <text x="662" y="680" fill="#dfd3c3" font-size="8" text-anchor="middle">2 Pax</text>
+
+                        <!-- Sofa Bases -->
+                        <rect x="465" y="700" width="75" height="28" class="sofa-shape"/>
+                        <rect x="545" y="700" width="75" height="28" class="sofa-shape"/>
+                        <rect x="625" y="700" width="75" height="28" class="sofa-shape"/>
+
+                        <!-- Interactive VIP Sofa Seats -->
+                        <!-- D6 & D5 -->
+                        <g transform="translate(485, 714)"><rect class="seat available" id="seat-D6" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('D6')"/><text class="seat-text" x="0" y="3" text-anchor="middle">D6</text></g>
+                        <g transform="translate(515, 714)"><rect class="seat available" id="seat-D5" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('D5')"/><text class="seat-text" x="0" y="3" text-anchor="middle">D5</text></g>
+
+                        <!-- D1 & D2 -->
+                        <g transform="translate(565, 714)"><rect class="seat available" id="seat-D1" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('D1')"/><text class="seat-text" x="0" y="3" text-anchor="middle">D1</text></g>
+                        <g transform="translate(595, 714)"><rect class="seat available" id="seat-D2" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('D2')"/><text class="seat-text" x="0" y="3" text-anchor="middle">D2</text></g>
+
+                        <!-- D3 & D4 -->
+                        <g transform="translate(645, 714)"><rect class="seat available" id="seat-D3" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('D3')"/><text class="seat-text" x="0" y="3" text-anchor="middle">D3</text></g>
+                        <g transform="translate(675, 714)"><rect class="seat available" id="seat-D4" x="-11" y="-11" width="22" height="22" rx="4" onclick="toggleSeat('D4')"/><text class="seat-text" x="0" y="3" text-anchor="middle">D4</text></g>
+                    </g>
+                </svg>
+            </div>
+        </main>
+
+        <!-- Right Reservation Form Panel -->
+        <aside class="w-80 bg-[#161210] border-l border-[#2d231d] p-5 flex flex-col justify-between no-print overflow-y-auto shadow-2xl">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-[#352922] pb-3">
+                    <h2 class="brand-font text-base font-bold text-[#e6c687]">Panel Reservasi</h2>
+                    <span id="selected-count-badge" class="px-2 py-0.5 bg-[#3b82f6]/20 border border-[#3b82f6]/40 text-blue-400 text-xs font-semibold rounded-full">0 Kursi</span>
+                </div>
+
+                <!-- Selected Seats Display -->
+                <div>
+                    <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">Kursi Terpilih</label>
+                    <div id="selected-seats-container" class="min-h-[48px] max-h-24 overflow-y-auto bg-[#1c1613] p-2 rounded border border-[#33251e] flex flex-wrap gap-1.5 items-center">
+                        <span class="text-xs text-gray-500 italic">Klik kursi pada denah untuk memilih...</span>
+                    </div>
+                </div>
+
+                <!-- Reservation Form Inputs -->
+                <form id="reservationForm" class="space-y-3" onsubmit="event.preventDefault();">
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Nama Pemesan *</label>
+                        <input type="text" id="custName" placeholder="Contoh: Bpk. Hendra" class="w-full px-3 py-2 bg-[#1f1915] border border-[#3d2e26] rounded text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#d4af37]">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">No. WhatsApp/HP *</label>
+                            <input type="tel" id="custPhone" placeholder="0812xxxx" class="w-full px-3 py-2 bg-[#1f1915] border border-[#3d2e26] rounded text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#d4af37]">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Jumlah Pax *</label>
+                            <input type="number" id="custPax" min="1" max="76" class="w-full px-3 py-2 bg-[#1f1915] border border-[#3d2e26] rounded text-sm text-gray-100 focus:outline-none focus:border-[#d4af37]">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Tanggal *</label>
+                            <input type="date" id="resDate" class="w-full px-3 py-2 bg-[#1f1915] border border-[#3d2e26] rounded text-xs text-gray-100 focus:outline-none focus:border-[#d4af37]">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Waktu *</label>
+                            <input type="time" id="resTime" class="w-full px-3 py-2 bg-[#1f1915] border border-[#3d2e26] rounded text-xs text-gray-100 focus:outline-none focus:border-[#d4af37]">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Catatan / Special Request</label>
+                        <textarea id="custNotes" rows="2" placeholder="VIP stage view, birthday setup, dsb." class="w-full px-3 py-2 bg-[#1f1915] border border-[#3d2e26] rounded text-xs text-gray-100 placeholder-gray-500 focus:outline-none focus:border-[#d4af37]"></textarea>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="space-y-2 pt-2">
+                        <button type="button" onclick="applyReservation('Reserved')" class="w-full py-2.5 bg-[#d4af37] hover:bg-[#c39e2e] text-black font-bold text-xs uppercase tracking-wider rounded transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-check-circle text-sm"></i> Simpan & Reservasi
+                        </button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="applyReservation('Blocked')" class="py-2 bg-[#2d241f] hover:bg-[#3d312a] border border-[#4a3b32] text-gray-300 font-semibold text-xs rounded transition">
+                                <i class="fa-solid fa-ban mr-1"></i> Block Kursi
+                            </button>
+                            <button type="button" onclick="releaseSelected()" class="py-2 bg-amber-950/40 hover:bg-amber-900/60 border border-amber-800/40 text-amber-300 font-semibold text-xs rounded transition">
+                                <i class="fa-solid fa-rotate-left mr-1"></i> Release Seat
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Selected Seat Details Footer -->
+            <div id="activeDetails" class="mt-4 p-3 bg-[#110d0b] border border-[#2b211a] rounded text-[11px] text-gray-400 space-y-1">
+                <p class="font-bold text-[#e6c687] text-xs">Informasi Kursi Aktif</p>
+                <p id="info-seat-details">Pilih kursi untuk melihat info detail reservasi pemesan.</p>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Inisialisasi Data 76 Seat
+        const ALL_SEATS = [
+            // Row A: A1 - A26 (26 seats)
+            ...Array.from({length: 26}, (_, i) => `A${i + 1}`),
+            // Row B: B1 - B24 (24 seats)
+            ...Array.from({length: 24}, (_, i) => `B${i + 1}`),
+            // Row C: C1 - C20 (20 seats)
+            ...Array.from({length: 20}, (_, i) => `C${i + 1}`),
+            // Row D: D1 - D6 (6 seats)
+            ...Array.from({length: 6}, (_, i) => `D${i + 1}`)
+        ];
+
+        let seatDatabase = {};
+        let selectedSeats = new Set();
+        let currentZoom = 1;
+
+        // Inisialisasi Database
+        function initApp() {
+            // Set default date & time form
+            const now = new Date();
+            document.getElementById('resDate').value = now.toISOString().split('T')[0];
+            document.getElementById('resTime').value = "19:00";
+
+            // Load localStorage atau default
+            const savedData = localStorage.getItem('TMP_SEATING_DATA_76');
+            if (savedData) {
+                try {
+                    seatDatabase = JSON.parse(savedData);
+                } catch (e) {
+                    console.error("Gagal load data local:", e);
+                    buildInitialDatabase();
+                }
+            } else {
+                buildInitialDatabase();
+            }
+
+            renderAllSeats();
+            updateStats();
+        }
+
+        function buildInitialDatabase() {
+            seatDatabase = {};
+            ALL_SEATS.forEach(id => {
+                const row = id.charAt(0);
+                seatDatabase[id] = {
+                    id: id,
+                    row: row,
+                    status: 'Available', // Available, Reserved, Blocked
+                    guestName: '',
+                    phone: '',
+                    pax: 1,
+                    date: '',
+                    time: '',
+                    notes: '',
+                    updatedAt: null
+                };
+            });
+            saveToStorage();
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('TMP_SEATING_DATA_76', JSON.stringify(seatDatabase));
+        }
+
+        // Toggle Pilih Kursi
+        function toggleSeat(seatId) {
+            if (!seatDatabase[seatId]) return;
+
+            if (selectedSeats.has(seatId)) {
+                selectedSeats.delete(seatId);
+            } else {
+                selectedSeats.add(seatId);
+            }
+
+            renderSeatStyle(seatId);
+            updateSelectedPanel();
+            updateStats();
+            showSeatDetails(seatId);
+        }
+
+        // Render Status Visual Kursi
+        function renderSeatStyle(seatId) {
+            const el = document.getElementById(`seat-${seatId}`);
+            if (!el) return;
+
+            el.classList.remove('available', 'selected', 'reserved', 'blocked');
+
+            if (selectedSeats.has(seatId)) {
+                el.classList.add('selected');
+            } else {
+                const status = seatDatabase[seatId].status.toLowerCase();
+                el.classList.add(status);
+            }
+        }
+
+        function renderAllSeats() {
+            ALL_SEATS.forEach(id => renderSeatStyle(id));
+            updateSelectedPanel();
+            updateStats();
+        }
+
+        // Update Panel Sisi Kanan
+        function updateSelectedPanel() {
+            const container = document.getElementById('selected-seats-container');
+            const countBadge = document.getElementById('selected-count-badge');
+            const paxInput = document.getElementById('custPax');
+
+            container.innerHTML = '';
+            countBadge.innerText = `${selectedSeats.size} Kursi`;
+
+            if (selectedSeats.size === 0) {
+                container.innerHTML = `<span class="text-xs text-gray-500 italic">Klik kursi pada denah untuk memilih...</span>`;
+                return;
+            }
+
+            paxInput.value = selectedSeats.size;
+
+            Array.from(selectedSeats).sort().forEach(id => {
+                const tag = document.createElement('span');
+                tag.className = 'px-2 py-0.5 bg-[#d4af37]/20 border border-[#d4af37]/50 text-[#e6c687] text-xs rounded font-bold flex items-center gap-1';
+                tag.innerHTML = `${id} <i class="fa-solid fa-xmark text-[10px] cursor-pointer hover:text-red-400" onclick="event.stopPropagation(); toggleSeat('${id}')"></i>`;
+                container.appendChild(tag);
+            });
+        }
+
+        // Quick Selector Row
+        function selectRow(rowLetter) {
+            const rowSeats = ALL_SEATS.filter(id => id.startsWith(rowLetter));
+            const allAlready = rowSeats.every(id => selectedSeats.has(id));
+
+            rowSeats.forEach(id => {
+                if (allAlready) {
+                    selectedSeats.delete(id);
+                } else {
+                    selectedSeats.add(id);
+                }
+                renderSeatStyle(id);
+            });
+            updateSelectedPanel();
+            updateStats();
+        }
+
+        function selectAll() {
+            ALL_SEATS.forEach(id => {
+                selectedSeats.add(id);
+                renderSeatStyle(id);
+            });
+            updateSelectedPanel();
+            updateStats();
+        }
+
+        function clearSelection() {
+            selectedSeats.clear();
+            renderAllSeats();
+        }
+
+        // Reservasi & Block Action
+        function applyReservation(newStatus) {
+            if (selectedSeats.size === 0) {
+                alert("Silakan pilih minimal 1 kursi pada denah layout!");
+                return;
+            }
+
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const pax = document.getElementById('custPax').value || selectedSeats.size;
+            const date = document.getElementById('resDate').value;
+            const time = document.getElementById('resTime').value;
+            const notes = document.getElementById('custNotes').value.trim();
+
+            if (newStatus === 'Reserved' && !name) {
+                alert("Harap masukkan Nama Pemesan untuk melakukan reservasi!");
+                document.getElementById('custName').focus();
+                return;
+            }
+
+            selectedSeats.forEach(id => {
+                seatDatabase[id] = {
+                    ...seatDatabase[id],
+                    status: newStatus,
+                    guestName: newStatus === 'Reserved' ? name : 'BLOCKED',
+                    phone: newStatus === 'Reserved' ? phone : '-',
+                    pax: pax,
+                    date: date,
+                    time: time,
+                    notes: notes,
+                    updatedAt: new Date().toLocaleString('id-ID')
+                };
+            });
+
+            saveToStorage();
+            selectedSeats.clear();
+            renderAllSeats();
+
+            // Reset Input Form
+            document.getElementById('custName').value = '';
+            document.getElementById('custPhone').value = '';
+            document.getElementById('custNotes').value = '';
+
+            alert(`Berhasil menyimpan status ${newStatus} untuk ${pax} pax!`);
+        }
+
+        // Release / Batal Reservasi
+        function releaseSelected() {
+            if (selectedSeats.size === 0) {
+                alert("Pilih kursi yang ingin di-release / dibatalkan!");
+                return;
+            }
+
+            if (confirm(`Kembalikan ${selectedSeats.size} kursi yang dipilih menjadi Available?`)) {
+                selectedSeats.forEach(id => {
+                    seatDatabase[id] = {
+                        id: id,
+                        row: id.charAt(0),
+                        status: 'Available',
+                        guestName: '',
+                        phone: '',
+                        pax: 1,
+                        date: '',
+                        time: '',
+                        notes: '',
+                        updatedAt: null
+                    };
+                });
+                saveToStorage();
+                selectedSeats.clear();
+                renderAllSeats();
+            }
+        }
+
+        function resetAllReservations() {
+            if (confirm("PERINGATAN: Apakah Anda yakin ingin mereset seluruh denah menjadi 100% Available?")) {
+                buildInitialDatabase();
+                selectedSeats.clear();
+                renderAllSeats();
+            }
+        }
+
+        // Detail Popup / Footer Info
+        function showSeatDetails(seatId) {
+            const data = seatDatabase[seatId];
+            const infoBox = document.getElementById('info-seat-details');
+            if (!data) return;
+
+            if (data.status === 'Available') {
+                infoBox.innerHTML = `<strong class="text-emerald-400 font-bold">${seatId}</strong>: Tersedia (Available).`;
+            } else {
+                infoBox.innerHTML = `
+                    <div class="space-y-0.5">
+                        <p><strong class="text-[#e6c687]">${seatId}</strong> &bull; Status: <span class="${data.status === 'Reserved' ? 'text-red-400' : 'text-gray-400'} font-bold">${data.status}</span></p>
+                        <p><strong>Nama:</strong> ${data.guestName || '-'}</p>
+                        <p><strong>Kontak:</strong> ${data.phone || '-'}</p>
+                        <p><strong>Jadwal:</strong> ${data.date || '-'} (${data.time || '-'})</p>
+                        ${data.notes ? `<p><strong>Catatan:</strong> ${data.notes}</p>` : ''}
+                    </div>
+                `;
+            }
+        }
+
+        // Update Counter Metrik
+        function updateStats() {
+            let reservedCount = 0;
+            let blockedCount = 0;
+            let availableCount = 0;
+
+            Object.values(seatDatabase).forEach(seat => {
+                if (seat.status === 'Reserved') reservedCount++;
+                else if (seat.status === 'Blocked') blockedCount++;
+                else availableCount++;
+            });
+
+            document.getElementById('stat-available').innerText = availableCount;
+            document.getElementById('stat-selected').innerText = selectedSeats.size;
+            document.getElementById('stat-reserved').innerText = reservedCount + (blockedCount > 0 ? ` (+${blockedCount})` : '');
+            
+            const occupancy = Math.round(((reservedCount + blockedCount) / 76) * 100);
+            document.getElementById('stat-occupancy').innerText = `${occupancy}%`;
+        }
+
+        // Zoom Viewport Handlers
+        function zoom(delta) {
+            currentZoom = Math.min(Math.max(0.6, currentZoom + delta), 2.2);
+            document.getElementById('venueFloorplan').style.transform = `scale(${currentZoom})`;
+        }
+
+        function resetZoom() {
+            currentZoom = 1;
+            document.getElementById('venueFloorplan').style.transform = `scale(1)`;
+        }
+
+        // Export & Import JSON
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(seatDatabase, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `TMP_Reservation_76_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importData(event) {
+            const fileReader = new FileReader();
+            fileReader.onload = function() {
+                try {
+                    const parsed = JSON.parse(fileReader.result);
+                    if (Object.keys(parsed).length >= 76) {
+                        seatDatabase = parsed;
+                        saveToStorage();
+                        selectedSeats.clear();
+                        renderAllSeats();
+                        alert("Data reservasi berhasil di-import!");
+                    } else {
+                        alert("File JSON tidak sesuai struktur 76 kursi venue.");
+                    }
+                } catch (err) {
+                    alert("Format file JSON tidak valid.");
+                }
+            };
+            fileReader.readAsText(event.target.files[0]);
+        }
+
+        // Start App on Load
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
